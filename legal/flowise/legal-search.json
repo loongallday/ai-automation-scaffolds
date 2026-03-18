@@ -1,0 +1,221 @@
+{
+  "nodes": [
+    {
+      "id": "chatOpenAI_0",
+      "position": { "x": 800, "y": 50 },
+      "type": "customNode",
+      "data": {
+        "id": "chatOpenAI_0",
+        "label": "ChatOpenAI (DeepSeek)",
+        "version": 2,
+        "name": "chatOpenAI",
+        "type": "ChatOpenAI",
+        "baseClasses": ["ChatOpenAI", "BaseChatModel"],
+        "category": "Chat Models",
+        "inputs": {
+          "modelName": "deepseek-chat",
+          "temperature": "0.7",
+          "maxTokens": "4000",
+          "basePath": "https://api.deepseek.com/v1",
+          "baseOptions": "{\"headers\":{}}",
+          "openAIApiKey": "{{DEEPSEEK_API_KEY}}"
+        },
+        "outputs": {}
+      }
+    },
+    {
+      "id": "bufferMemory_0",
+      "position": { "x": 800, "y": 350 },
+      "type": "customNode",
+      "data": {
+        "id": "bufferMemory_0",
+        "label": "Buffer Memory",
+        "version": 2,
+        "name": "bufferMemory",
+        "type": "BufferMemory",
+        "baseClasses": ["BufferMemory", "BaseChatMemory", "BaseMemory"],
+        "category": "Memory",
+        "inputs": {
+          "memoryKey": "chat_history",
+          "sessionId": "",
+          "k": "5"
+        },
+        "outputs": {}
+      }
+    },
+    {
+      "id": "conversationalRetrievalQAChain_0",
+      "position": { "x": 1200, "y": 200 },
+      "type": "customNode",
+      "data": {
+        "id": "conversationalRetrievalQAChain_0",
+        "label": "Conversational Retrieval QA Chain",
+        "version": 2,
+        "name": "conversationalRetrievalQAChain",
+        "type": "ConversationalRetrievalQAChain",
+        "baseClasses": ["ConversationalRetrievalQAChain", "BaseChain"],
+        "category": "Chains",
+        "inputs": {
+          "systemMessagePrompt": "คุณเป็น AI ที่ช่วยค้นหาข้อมูลกฎหมายไทย พ.ร.บ. และกฎระเบียบ ตอบเป็นภาษาไทย อ้างอิงมาตราที่เกี่ยวข้อง",
+          "returnSourceDocuments": true
+        },
+        "outputs": {}
+      }
+    },
+    {
+      "id": "memoryVectorStore_0",
+      "position": { "x": 500, "y": 200 },
+      "type": "customNode",
+      "data": {
+        "id": "memoryVectorStore_0",
+        "label": "In-Memory Vector Store",
+        "version": 1,
+        "name": "memoryVectorStore",
+        "type": "Memory",
+        "baseClasses": ["Memory", "VectorStoreRetriever", "BaseRetriever"],
+        "category": "Vector Stores",
+        "inputs": {
+          "topK": "4"
+        },
+        "outputs": {}
+      }
+    },
+    {
+      "id": "openAIEmbeddings_0",
+      "position": { "x": 200, "y": 350 },
+      "type": "customNode",
+      "data": {
+        "id": "openAIEmbeddings_0",
+        "label": "OpenAI Embeddings (DeepSeek)",
+        "version": 2,
+        "name": "openAIEmbeddings",
+        "type": "OpenAIEmbeddings",
+        "baseClasses": ["OpenAIEmbeddings", "Embeddings"],
+        "category": "Embeddings",
+        "inputs": {
+          "modelName": "text-embedding-3-small",
+          "basePath": "https://api.deepseek.com/v1",
+          "openAIApiKey": "{{DEEPSEEK_API_KEY}}"
+        },
+        "outputs": {}
+      }
+    },
+    {
+      "id": "pdfFile_0",
+      "position": { "x": 50, "y": 50 },
+      "type": "customNode",
+      "data": {
+        "id": "pdfFile_0",
+        "label": "PDF File Loader",
+        "version": 1,
+        "name": "pdfFile",
+        "type": "Document",
+        "baseClasses": ["Document"],
+        "category": "Document Loaders",
+        "inputs": {},
+        "outputs": {}
+      }
+    },
+    {
+      "id": "textFile_0",
+      "position": { "x": 50, "y": 250 },
+      "type": "customNode",
+      "data": {
+        "id": "textFile_0",
+        "label": "Text File Loader",
+        "version": 1,
+        "name": "textFile",
+        "type": "Document",
+        "baseClasses": ["Document"],
+        "category": "Document Loaders",
+        "inputs": {},
+        "outputs": {}
+      }
+    },
+    {
+      "id": "recursiveCharacterTextSplitter_0",
+      "position": { "x": 50, "y": 500 },
+      "type": "customNode",
+      "data": {
+        "id": "recursiveCharacterTextSplitter_0",
+        "label": "Recursive Character Text Splitter",
+        "version": 2,
+        "name": "recursiveCharacterTextSplitter",
+        "type": "RecursiveCharacterTextSplitter",
+        "baseClasses": ["RecursiveCharacterTextSplitter", "TextSplitter"],
+        "category": "Text Splitters",
+        "inputs": {
+          "chunkSize": "1000",
+          "chunkOverlap": "200"
+        },
+        "outputs": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "chatOpenAI_0",
+      "sourceHandle": "chatOpenAI_0-output-chatOpenAI-ChatOpenAI|BaseChatModel",
+      "target": "conversationalRetrievalQAChain_0",
+      "targetHandle": "conversationalRetrievalQAChain_0-input-model-ChatOpenAI",
+      "type": "buttonedge",
+      "id": "chatOpenAI_0-conversationalRetrievalQAChain_0"
+    },
+    {
+      "source": "bufferMemory_0",
+      "sourceHandle": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+      "target": "conversationalRetrievalQAChain_0",
+      "targetHandle": "conversationalRetrievalQAChain_0-input-memory-BufferMemory",
+      "type": "buttonedge",
+      "id": "bufferMemory_0-conversationalRetrievalQAChain_0"
+    },
+    {
+      "source": "memoryVectorStore_0",
+      "sourceHandle": "memoryVectorStore_0-output-retriever-Memory|VectorStoreRetriever|BaseRetriever",
+      "target": "conversationalRetrievalQAChain_0",
+      "targetHandle": "conversationalRetrievalQAChain_0-input-vectorStoreRetriever-BaseRetriever",
+      "type": "buttonedge",
+      "id": "memoryVectorStore_0-conversationalRetrievalQAChain_0"
+    },
+    {
+      "source": "openAIEmbeddings_0",
+      "sourceHandle": "openAIEmbeddings_0-output-openAIEmbeddings-OpenAIEmbeddings|Embeddings",
+      "target": "memoryVectorStore_0",
+      "targetHandle": "memoryVectorStore_0-input-embeddings-OpenAIEmbeddings",
+      "type": "buttonedge",
+      "id": "openAIEmbeddings_0-memoryVectorStore_0"
+    },
+    {
+      "source": "pdfFile_0",
+      "sourceHandle": "pdfFile_0-output-pdfFile-Document",
+      "target": "memoryVectorStore_0",
+      "targetHandle": "memoryVectorStore_0-input-document-Document",
+      "type": "buttonedge",
+      "id": "pdfFile_0-memoryVectorStore_0"
+    },
+    {
+      "source": "textFile_0",
+      "sourceHandle": "textFile_0-output-textFile-Document",
+      "target": "memoryVectorStore_0",
+      "targetHandle": "memoryVectorStore_0-input-document-Document",
+      "type": "buttonedge",
+      "id": "textFile_0-memoryVectorStore_0"
+    },
+    {
+      "source": "recursiveCharacterTextSplitter_0",
+      "sourceHandle": "recursiveCharacterTextSplitter_0-output-recursiveCharacterTextSplitter-RecursiveCharacterTextSplitter|TextSplitter",
+      "target": "pdfFile_0",
+      "targetHandle": "pdfFile_0-input-textSplitter-RecursiveCharacterTextSplitter",
+      "type": "buttonedge",
+      "id": "recursiveCharacterTextSplitter_0-pdfFile_0"
+    },
+    {
+      "source": "recursiveCharacterTextSplitter_0",
+      "sourceHandle": "recursiveCharacterTextSplitter_0-output-recursiveCharacterTextSplitter-RecursiveCharacterTextSplitter|TextSplitter",
+      "target": "textFile_0",
+      "targetHandle": "textFile_0-input-textSplitter-RecursiveCharacterTextSplitter",
+      "type": "buttonedge",
+      "id": "recursiveCharacterTextSplitter_0-textFile_0"
+    }
+  ]
+}

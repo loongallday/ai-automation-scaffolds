@@ -1,0 +1,111 @@
+{
+  "name": "Review Auto-Reply",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "review-demo",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-review",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "name": "Review Webhook",
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-rating",
+              "name": "rating",
+              "value": "={{ $json.body.rating }}",
+              "type": "number"
+            },
+            {
+              "id": "set-comment",
+              "name": "comment",
+              "value": "={{ $json.body.comment }}",
+              "type": "string"
+            },
+            {
+              "id": "set-reviewer",
+              "name": "reviewer",
+              "value": "={{ $json.body.reviewer }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-review",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Extract Review Data",
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Rating: {{ $json.rating }}\nReview: {{ $json.comment }}\nReviewer: {{ $json.reviewer }}",
+        "options": {
+          "systemMessage": "คุณเป็น AI ที่ช่วยตอบรีวิวลูกค้า ตอบเป็นภาษาไทยสุภาพ ขอบคุณลูกค้า ถ้ารีวิวดีให้ชื่นชม ถ้ารีวิวไม่ดีให้ขอโทษและเสนอแก้ไข กระชับ 2-3 ประโยค"
+        }
+      },
+      "id": "agent-review",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "name": "AI Agent",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "model": "deepseek-chat",
+        "options": {
+          "baseURL": "https://api.deepseek.com",
+          "temperature": 0.7
+        }
+      },
+      "id": "llm-review",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "name": "DeepSeek Chat",
+      "position": [600, 500],
+      "credentials": {
+        "openAiApi": {
+          "id": "deepseek-cred",
+          "name": "DeepSeek API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.output }) }}"
+      },
+      "id": "respond-review",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "name": "Respond to Webhook",
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Review Webhook": {
+      "main": [[{ "node": "Extract Review Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Review Data": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "DeepSeek Chat": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}

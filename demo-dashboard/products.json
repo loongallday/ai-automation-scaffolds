@@ -1,0 +1,14 @@
+[
+  {"sku": "X200", "name": "X200 Pro", "price": 12500, "stock": 45, "category": "สมาร์ทโฟน", "description": "สมาร์ทโฟน 6.7 นิ้ว, Snapdragon 8 Gen 3, RAM 12GB, กล้อง 200MP"},
+  {"sku": "X100", "name": "X100 Lite", "price": 7990, "stock": 120, "category": "สมาร์ทโฟน", "description": "สมาร์ทโฟน 6.5 นิ้ว, Dimensity 7200, RAM 8GB, กล้อง 108MP"},
+  {"sku": "BT700", "name": "หูฟัง BT700", "price": 3490, "stock": 200, "category": "อุปกรณ์เสริม", "description": "หูฟังบลูทูธ ANC, แบตอึด 40 ชม., ไดรเวอร์ 40mm"},
+  {"sku": "BT300", "name": "หูฟัง BT300", "price": 1290, "stock": 350, "category": "อุปกรณ์เสริม", "description": "หูฟังบลูทูธ TWS, แบต 8 ชม., กันน้ำ IPX4"},
+  {"sku": "CASE-X2", "name": "เคสกันกระแทก X200", "price": 990, "stock": 500, "category": "เคส", "description": "เคสกันกระแทก MIL-STD-810G สำหรับ X200 Pro"},
+  {"sku": "CASE-X1", "name": "เคสกันกระแทก X100", "price": 690, "stock": 450, "category": "เคส", "description": "เคสกันกระแทกสำหรับ X100 Lite"},
+  {"sku": "CHG-65W", "name": "แท่นชาร์จ 65W", "price": 1490, "stock": 180, "category": "อุปกรณ์เสริม", "description": "แท่นชาร์จเร็ว GaN 65W, 3 พอร์ต USB-C + USB-A"},
+  {"sku": "CABLE-C", "name": "สาย USB-C 2m", "price": 390, "stock": 800, "category": "อุปกรณ์เสริม", "description": "สาย USB-C to USB-C, ชาร์จเร็ว 100W, ถัก Nylon"},
+  {"sku": "PWR-20K", "name": "Power Bank 20000mAh", "price": 1890, "stock": 95, "category": "อุปกรณ์เสริม", "description": "Power Bank 20000mAh, ชาร์จเร็ว 65W, จอ LED"},
+  {"sku": "WATCH-S1", "name": "Smart Watch S1", "price": 4990, "stock": 60, "category": "สมาร์ทวอทช์", "description": "สมาร์ทวอทช์ AMOLED 1.5 นิ้ว, SpO2, GPS, กันน้ำ 5ATM"},
+  {"sku": "TAB-10", "name": "Tablet T10 Pro", "price": 15900, "stock": 30, "category": "แท็บเล็ต", "description": "แท็บเล็ต 10.8 นิ้ว, Snapdragon 870, RAM 8GB, ปากกา Stylus"},
+  {"sku": "FILM-X2", "name": "ฟิล์มกระจก X200", "price": 290, "stock": 1000, "category": "ฟิล์ม", "description": "ฟิล์มกระจกนิรภัย 9H สำหรับ X200 Pro"}
+]

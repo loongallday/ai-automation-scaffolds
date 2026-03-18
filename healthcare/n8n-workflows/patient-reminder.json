@@ -1,0 +1,98 @@
+{
+  "name": "Patient Appointment Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "name": "Daily 8AM",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT a.id, a.slot_date, a.slot_time, a.doctor_name, a.department, p.line_user_id, p.full_name FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.slot_date = CURRENT_DATE + INTERVAL '1 day' AND a.reminder_sent = false AND a.status = 'confirmed'"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "name": "Get Tomorrow Appointments",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.line_user_id }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "name": "Has LINE ID?",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Authorization", "value": "Bearer {{ $env.LINE_CHANNEL_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"to\":\"{{ $json.line_user_id }}\",\"messages\":[{\"type\":\"text\",\"text\":\"สวัสดีค่ะ คุณ{{ $json.full_name }} \\nแจ้งเตือนนัดพบแพทย์พรุ่งนี้\\nวันที่: {{ $json.slot_date }}\\nเวลา: {{ $json.slot_time }}\\nแพทย์: {{ $json.doctor_name }}\\nแผนก: {{ $json.department }}\\n\\nกรุณามาก่อนเวลานัด 15 นาทีค่ะ\"}]}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Send Reminder",
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE appointments SET reminder_sent = true WHERE id = {{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "name": "Mark Sent",
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Daily 8AM": {
+      "main": [
+        [{ "node": "Get Tomorrow Appointments", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Tomorrow Appointments": {
+      "main": [
+        [{ "node": "Has LINE ID?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Has LINE ID?": {
+      "main": [
+        [{ "node": "Send Reminder", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Reminder": {
+      "main": [
+        [{ "node": "Mark Sent", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Bangkok"
+  }
+}

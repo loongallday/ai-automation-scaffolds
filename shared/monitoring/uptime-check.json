@@ -1,0 +1,120 @@
+{
+  "name": "Uptime Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "name": "Every 5 Minutes",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define services to monitor\n// Add or remove URLs as needed\nconst services = [\n  { name: 'n8n', url: process.env.WEBHOOK_URL || 'http://localhost:5678/healthz' },\n  { name: 'Flowise', url: 'http://flowise:3000' },\n  { name: 'PostgreSQL', url: 'http://postgres:5432', type: 'tcp' }\n];\n\nreturn services.map(s => ({ json: s }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "Service List",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Health Check",
+      "position": [650, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.statusCode }}",
+              "operation": "notEqual",
+              "value2": 200
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "name": "Is Down?",
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://notify-api.line.me/api/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.LINE_NOTIFY_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "message", "value": "SERVICE DOWN: {{ $('Service List').item.json.name }} is not responding!\nURL: {{ $('Service List').item.json.url }}\nTime: {{ new Date().toLocaleString('th-TH', {timeZone: 'Asia/Bangkok'}) }}" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Alert Down",
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "uptime_logs",
+        "columns": "service_name,url,status_code,response_time_ms,checked_at"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "name": "Log Status",
+      "position": [1050, 400]
+    }
+  ],
+  "connections": {
+    "Every 5 Minutes": {
+      "main": [
+        [{ "node": "Service List", "type": "main", "index": 0 }]
+      ]
+    },
+    "Service List": {
+      "main": [
+        [{ "node": "Health Check", "type": "main", "index": 0 }]
+      ]
+    },
+    "Health Check": {
+      "main": [
+        [
+          { "node": "Is Down?", "type": "main", "index": 0 },
+          { "node": "Log Status", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Is Down?": {
+      "main": [
+        [{ "node": "Alert Down", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Bangkok"
+  }
+}

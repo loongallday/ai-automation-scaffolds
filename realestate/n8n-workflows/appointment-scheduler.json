@@ -1,0 +1,102 @@
+{
+  "name": "Property Viewing Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schedule-viewing",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "name": "Schedule Request",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT slot_date, slot_time FROM agent_availability WHERE slot_date >= CURRENT_DATE AND is_booked = false AND agent_id = {{ $json.body.agent_id }} ORDER BY slot_date, slot_time LIMIT 10"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "name": "Check Availability",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "viewings",
+        "columns": "listing_id,customer_name,customer_phone,customer_line_id,viewing_date,viewing_time,agent_id,status"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "name": "Create Viewing",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Authorization", "value": "Bearer {{ $env.LINE_CHANNEL_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"to\":\"{{ $json.customer_line_id }}\",\"messages\":[{\"type\":\"text\",\"text\":\"นัดชมทรัพย์สินยืนยันแล้ว\\nวันที่: {{ $json.viewing_date }}\\nเวลา: {{ $json.viewing_time }}\\nรหัสทรัพย์: {{ $json.listing_id }}\"}]}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Confirm to Customer",
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Authorization", "value": "Bearer {{ $env.LINE_CHANNEL_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"to\":\"{{ $env.ADMIN_LINE_USER_ID }}\",\"messages\":[{\"type\":\"text\",\"text\":\"นัดชมใหม่!\\nลูกค้า: {{ $json.customer_name }}\\nวันที่: {{ $json.viewing_date }} {{ $json.viewing_time }}\\nรหัสทรัพย์: {{ $json.listing_id }}\"}]}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Notify Agent",
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Request": {
+      "main": [
+        [{ "node": "Check Availability", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Availability": {
+      "main": [
+        [{ "node": "Create Viewing", "type": "main", "index": 0 }]
+      ]
+    },
+    "Create Viewing": {
+      "main": [
+        [
+          { "node": "Confirm to Customer", "type": "main", "index": 0 },
+          { "node": "Notify Agent", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Bangkok"
+  }
+}

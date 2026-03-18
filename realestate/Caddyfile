@@ -1,0 +1,39 @@
+# Local development Caddyfile
+:80 {
+    # Demo Dashboard
+    handle_path /demo/* {
+        root * /srv/demo-dashboard
+        file_server
+    }
+    handle /demo {
+        redir /demo/ permanent
+    }
+
+    # n8n webhook proxy with CORS (keep /webhook/ prefix for n8n)
+    handle /webhook/* {
+        header {
+            Access-Control-Allow-Origin *
+            Access-Control-Allow-Methods "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers "Content-Type, Authorization"
+        }
+        @options method OPTIONS
+        respond @options 204
+        reverse_proxy n8n:5678
+    }
+
+    # n8n UI proxy
+    handle_path /n8n/* {
+        reverse_proxy n8n:5678
+    }
+
+    # Flowise proxy
+    handle_path /flowise/* {
+        reverse_proxy flowise:3000
+    }
+
+    # Default — serve dashboard
+    handle {
+        root * /srv/demo-dashboard
+        file_server
+    }
+}

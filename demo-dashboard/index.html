@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Studio — Demo Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="config.js"></script>
+  <script src="industry-config.js" onerror="console.log('No industry-config.js — using defaults')"></script>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: 'Bai Jamjuree', sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────────────────── */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e7;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1d1d1f;
+    }
+    .header h1 .accent { color: #06c; }
+    .header .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header .status {
+      font-size: 0.8rem;
+      color: #86868b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header .status .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #30d158;
+    }
+    .header .status .dot.offline { background: #ff453a; }
+
+    .env-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .env-badge.demo {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .env-badge.live {
+      background: #dcfce7;
+      color: #166534;
+      animation: pulse-live 2s ease-in-out infinite;
+    }
+    @keyframes pulse-live {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* ── Environment Switcher ────────────────────────── */
+    .env-switcher {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e7;
+      padding: 16px 32px;
+    }
+    .env-switcher-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .env-toggle-group {
+      display: flex;
+      background: #f0f0f2;
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .env-toggle-btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+      color: #86868b;
+    }
+    .env-toggle-btn.active {
+      background: #fff;
+      color: #1d1d1f;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .env-toggle-btn.demo-btn.active { color: #1e40af; }
+    .env-toggle-btn.prod-btn.active { color: #166534; }
+
+    .env-label {
+      font-size: 0.8rem;
+      color: #86868b;
+      font-weight: 500;
+    }
+
+    .production-settings {
+      display: none;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 8px;
+    }
+    .production-settings.visible { display: block; }
+    .production-settings .warning-banner {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 0.8rem;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .production-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .production-fields .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .production-fields .field-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .production-fields label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #86868b;
+    }
+    .production-fields input {
+      padding: 8px 12px;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+    .production-fields .webhook-display {
+      padding: 8px 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #374151;
+      user-select: all;
+    }
+    .production-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    /* ── Config Bar ───────────────────────────────────── */
+    .config-bar {
+      background: #fff;
+      padding: 10px 32px;
+      border-bottom: 1px solid #e5e5e7;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8rem;
+    }
+    .config-bar label { color: #86868b; font-weight: 500; }
+    .config-bar input[type="text"] {
+      flex: 1;
+      max-width: 420px;
+      padding: 6px 12px;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.8rem;
+    }
+
+    /* ── Tabs ─────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      background: #fff;
+      border-bottom: 1px solid #e5e5e7;
+      padding: 0 32px;
+    }
+    .tab-btn {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #86868b;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: #1d1d1f; }
+    .tab-btn.active {
+      color: var(--accent, #06c);
+      border-bottom-color: var(--accent, #06c);
+    }
+
+    /* ── Main Content ─────────────────────────────────── */
+    .main { padding: 24px 32px; max-width: 1100px; margin: 0 auto; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Card ─────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    /* ── Buttons ──────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--accent, #06c); color: #fff; }
+    .btn-primary:hover { filter: brightness(0.9); }
+    .btn-success { background: #30d158; color: #fff; }
+    .btn-success:hover { background: #28b84c; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #d2d2d7;
+      color: #1d1d1f;
+    }
+    .btn-outline:hover { background: #f5f5f7; }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+    .btn-warning { background: #f59e0b; color: #fff; }
+    .btn-warning:hover { background: #d97706; }
+
+    /* ════════════════════════════════════════════════════
+       LINE SIMULATOR
+       ════════════════════════════════════════════════════ */
+    .line-chat {
+      background: #7494ab;
+      border-radius: 20px;
+      overflow: hidden;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      height: 70vh;
+      min-height: 500px;
+      max-height: 800px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    }
+    .line-header {
+      background: #06c755;
+      color: #fff;
+      padding: 14px 16px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .line-header .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .line-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .line-msg {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .line-msg.user {
+      align-self: flex-end;
+      background: #06c755;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .line-msg.bot {
+      align-self: flex-start;
+      background: #fff;
+      color: #1d1d1f;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .line-msg .msg-text { display: block; }
+    .line-msg .msg-time {
+      display: block;
+      font-size: 0.65rem;
+      color: rgba(0,0,0,0.35);
+      margin-top: 4px;
+      text-align: right;
+    }
+    .line-msg.user .msg-time { color: rgba(255,255,255,0.6); }
+    .line-msg.typing {
+      align-self: flex-start;
+      background: #fff;
+      color: #86868b;
+      padding: 12px 20px;
+    }
+    .typing-dots {
+      animation: typingPulse 1.2s ease-in-out infinite;
+      letter-spacing: 3px;
+      font-size: 1rem;
+    }
+    @keyframes typingPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+    .line-input-area {
+      background: #fff;
+      padding: 10px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-top: 1px solid #e5e5e7;
+    }
+    .line-input-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #e5e5e7;
+      border-radius: 20px;
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+    }
+    .line-input-area input:focus { border-color: #06c755; }
+    .line-send-btn {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: #06c755;
+      border: none;
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .line-send-btn:hover { background: #05a847; }
+
+    .quick-msgs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .quick-msg {
+      padding: 6px 14px;
+      background: #f0f0f2;
+      border: 1px solid #d2d2d7;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .quick-msg:hover { background: #e5e5e7; }
+
+    /* ════════════════════════════════════════════════════
+       ORDER / LEAD / APPOINTMENT / CONTENT SIMULATOR
+       ════════════════════════════════════════════════════ */
+    .order-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .order-form label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #86868b;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .order-form input, .order-form textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d2d2d7;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+    .order-form textarea { resize: vertical; min-height: 80px; }
+    .order-form .full-width { grid-column: 1 / -1; }
+
+    .order-timeline {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 24px 0;
+    }
+    .order-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 100px;
+    }
+    .order-step .circle {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #e5e5e7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: all 0.4s;
+    }
+    .order-step .circle.active { background: var(--accent, #06c); color: #fff; }
+    .order-step .circle.done { background: #30d158; color: #fff; }
+    .order-step span { font-size: 0.75rem; color: #86868b; }
+    .order-connector {
+      width: 60px; height: 2px;
+      background: #e5e5e7;
+      transition: background 0.4s;
+    }
+    .order-connector.active { background: #30d158; }
+
+    .order-list { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+    .order-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #fff;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      border: 1px solid #e5e5e7;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s;
+    }
+    .order-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .order-item .order-left { display: flex; flex-direction: column; gap: 4px; }
+    .order-item .order-id { font-weight: 700; color: var(--accent, #06c); font-size: 0.95rem; }
+    .order-item .order-detail { color: #86868b; font-size: 0.8rem; }
+    .order-item .order-time { color: #aeaeb2; font-size: 0.7rem; margin-top: 2px; }
+    .order-item .order-status {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .status-received { background: #fef3c7; color: #92400e; }
+    .status-processing { background: #dbeafe; color: #1e40af; }
+    .status-shipped { background: #d1fae5; color: #065f46; }
+    .status-completed { background: #d1fae5; color: #065f46; }
+
+    /* ════════════════════════════════════════════════════
+       REVIEW / FEEDBACK / ENGAGEMENT SIMULATOR
+       ════════════════════════════════════════════════════ */
+    .review-card {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .star-rating {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .star-rating .star {
+      font-size: 2rem;
+      cursor: pointer;
+      color: #d2d2d7;
+      transition: color 0.15s;
+      user-select: none;
+    }
+    .star-rating .star.active { color: #fbbf24; }
+    .star-rating .star:hover { color: #f59e0b; }
+
+    .review-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px 16px;
+      border: 1px solid #d2d2d7;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: vertical;
+      margin-bottom: 16px;
+    }
+    .review-textarea:focus { outline: none; border-color: var(--accent, #06c); }
+
+    .ai-reply-box {
+      background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
+      border: 1.5px solid #93c5fd;
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-top: 20px;
+      display: none;
+      box-shadow: 0 4px 16px rgba(0,102,204,0.08);
+      animation: fadeSlideUp 0.4s ease-out;
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .ai-reply-box.visible { display: block; }
+    .ai-reply-box h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent, #06c);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ai-reply-box h3::before { content: '🤖'; font-size: 1rem; }
+    .ai-reply-box p {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: #1d1d1f;
+    }
+
+    /* ════════════════════════════════════════════════════
+       GOOGLE SHEET SIMULATOR
+       ════════════════════════════════════════════════════ */
+    .sheet-container {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e5e7;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .sheet-toolbar {
+      background: #188038;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .sheet-toolbar .sheet-icon { font-size: 1.2rem; }
+    .sheet-toolbar .sheet-title { flex: 1; font-weight: 600; }
+    .sheet-toolbar .sheet-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+    }
+    .sheet-tabs-bar {
+      background: #f1f3f4;
+      display: flex;
+      gap: 0;
+      padding: 0 8px;
+      border-bottom: 1px solid #e5e5e7;
+      overflow-x: auto;
+    }
+    .sheet-tab {
+      padding: 8px 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #5f6368;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .sheet-tab:hover { background: #e8eaed; }
+    .sheet-tab.active { color: #188038; border-bottom-color: #188038; background: #fff; }
+    .sheet-table-wrap {
+      overflow-x: auto;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .sheet-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .sheet-table th {
+      background: #f8f9fa;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #5f6368;
+      border-bottom: 2px solid #e5e5e7;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      white-space: nowrap;
+    }
+    .sheet-table th:first-child {
+      background: #e8eaed;
+      color: #80868b;
+      text-align: center;
+      width: 40px;
+    }
+    .sheet-table td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #f1f3f4;
+      color: #202124;
+      white-space: nowrap;
+    }
+    .sheet-table td:first-child {
+      background: #f8f9fa;
+      color: #80868b;
+      text-align: center;
+      font-size: 0.7rem;
+    }
+    .sheet-table tr:hover td { background: #e8f0fe; }
+    .sheet-table tr:hover td:first-child { background: #d2e3fc; }
+    .sheet-table .cell-highlight {
+      background: #e6f4ea;
+      font-weight: 500;
+      color: #188038;
+    }
+    .sheet-table .cell-new {
+      animation: cellFlash 1s ease-out;
+    }
+    @keyframes cellFlash {
+      0% { background: #fbbc04; }
+      100% { background: transparent; }
+    }
+    .sheet-status {
+      padding: 8px 16px;
+      font-size: 0.7rem;
+      color: #80868b;
+      border-top: 1px solid #f1f3f4;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ════════════════════════════════════════════════════
+       ANALYTICS
+       ════════════════════════════════════════════════════ */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .chart-container h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    canvas { width: 100% !important; height: 200px !important; }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 700px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .stat-card .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1d1d1f;
+    }
+    .stat-card .stat-label {
+      font-size: 0.75rem;
+      color: #86868b;
+      margin-top: 4px;
+    }
+    .stat-card .stat-change {
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-top: 6px;
+    }
+    .stat-change.up { color: #30d158; }
+    .stat-change.down { color: #ff453a; }
+
+    /* ── Loading Spinner ─────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #d2d2d7;
+      border-top-color: var(--accent, #06c);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast notification ──────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      padding: 16px 28px;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      z-index: 999;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      max-width: 90vw;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.success { background: rgba(48,209,88,0.95); }
+    .toast.error { background: rgba(255,69,58,0.95); }
+    .toast.info { background: rgba(0,102,204,0.95); }
+    .toast .toast-icon { font-size: 1.2rem; }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 600px) {
+      .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+      .tabs { padding: 0 16px; overflow-x: auto; }
+      .tab-btn { padding: 10px 14px; font-size: 0.8rem; white-space: nowrap; }
+      .main { padding: 16px; }
+      .config-bar { padding: 10px 16px; flex-wrap: wrap; }
+      .env-switcher { padding: 12px 16px; }
+      .order-form { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .production-fields { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header" id="appHeader">
+    <h1><span class="accent">AI Studio</span> — <span id="headerIndustryName">Demo Dashboard</span></h1>
+    <div class="header-right">
+      <span class="env-badge demo" id="envBadge">DEMO</span>
+      <div class="status" id="aiStatus" style="margin-right:4px;">
+        <div class="dot offline" id="aiStatusDot"></div>
+        <span id="aiStatusText">AI: Checking...</span>
+      </div>
+      <div class="status">
+        <div class="dot" id="statusDot"></div>
+        <span id="statusText">Checking n8n...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Environment Switcher -->
+  <div class="env-switcher">
+    <div class="env-switcher-row">
+      <span class="env-label">Environment:</span>
+      <div class="env-toggle-group">
+        <button class="env-toggle-btn demo-btn active" onclick="setEnvironment('demo')">Demo Mode</button>
+        <button class="env-toggle-btn prod-btn" onclick="setEnvironment('production')">Production (LINE)</button>
+      </div>
+    </div>
+    <div class="production-settings" id="productionSettings">
+      <div class="warning-banner">
+        <span>LIVE MODE</span>
+        ข้อความจะถูกส่งไปยัง LINE API จริง ผ่าน n8n webhook กรุณาตรวจสอบ credentials ให้ถูกต้อง
+      </div>
+      <div class="production-fields">
+        <div class="field-group">
+          <label>LINE Channel Secret</label>
+          <input type="password" id="lineChannelSecret" placeholder="Channel secret..." />
+        </div>
+        <div class="field-group">
+          <label>LINE Channel Access Token</label>
+          <input type="password" id="lineAccessToken" placeholder="Access token..." />
+        </div>
+        <div class="field-group full-width">
+          <label>Webhook URL (ตั้งค่าใน LINE Developers Console)</label>
+          <div class="webhook-display" id="webhookUrlDisplay">https://your-domain/webhook/line</div>
+        </div>
+      </div>
+      <div class="production-actions">
+        <button class="btn btn-sm btn-success" onclick="saveLineCredentials()">Save & Connect</button>
+        <button class="btn btn-sm btn-outline" onclick="testLineConnection()">Test Connection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config Bar -->
+  <div class="config-bar">
+    <label>n8n Webhook URL:</label>
+    <input type="text" id="webhookUrlInput" />
+    <button class="btn btn-sm btn-outline" onclick="saveWebhookUrl()">Save</button>
+    <span style="width:1px;height:20px;background:#d2d2d7;margin:0 4px;"></span>
+    <button class="btn btn-sm btn-outline" onclick="testAIConnection()" id="testAiBtn" style="white-space:nowrap;">Test AI</button>
+  </div>
+
+  <!-- Tabs (dynamic) -->
+  <nav class="tabs" id="tabBar"></nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ═══ LINE SIMULATOR ═══ -->
+    <div id="tab-line" class="tab-content">
+      <div class="line-chat">
+        <div class="line-header">
+          <div class="avatar" id="lineBotAvatar">AI</div>
+          <div>
+            <div id="lineBotName">AI Assistant</div>
+            <div style="font-size:0.7rem;font-weight:400;opacity:0.8" id="lineBotSub">Demo Bot</div>
+          </div>
+        </div>
+        <div class="line-messages" id="lineMessages">
+          <div class="line-msg bot" id="lineWelcome">สวัสดีครับ! ยินดีต้อนรับสู่ AI Studio Demo</div>
+        </div>
+        <div class="line-input-area">
+          <input type="text" id="lineInput" placeholder="พิมพ์ข้อความ..." onkeydown="if(event.key==='Enter')sendLineMessage()" />
+          <button class="line-send-btn" onclick="sendLineMessage()">&#9654;</button>
+        </div>
+      </div>
+      <div class="quick-msgs" id="quickMsgs"></div>
+    </div>
+
+    <!-- ═══ ORDER / LEAD / APPOINTMENT / CONTENT SIMULATOR ═══ -->
+    <div id="tab-order" class="tab-content">
+      <div class="card">
+        <h2 id="orderFormTitle">Create Order</h2>
+        <div class="order-form" id="orderFormFields"></div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card" id="orderTimelineCard" style="display:none;">
+        <h2>Status</h2>
+        <div class="order-timeline" id="orderTimeline"></div>
+      </div>
+
+      <!-- History -->
+      <div class="card">
+        <h2 id="orderHistoryTitle">History</h2>
+        <div class="order-list" id="orderList">
+          <div style="color:#86868b;font-size:0.875rem;text-align:center;padding:20px;">No items yet. Create one above.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ REVIEW / FEEDBACK / ENGAGEMENT SIMULATOR ═══ -->
+    <div id="tab-review" class="tab-content">
+      <div class="card review-card">
+        <h2 id="reviewTitle">Review Simulator</h2>
+        <p style="font-size:0.85rem;color:#86868b;margin-bottom:16px;" id="reviewSubtitle">Simulate a review to test AI auto-reply.</p>
+
+        <label style="font-size:0.8rem;font-weight:500;color:#86868b;display:block;margin-bottom:8px;">Rating</label>
+        <div class="star-rating" id="starRating">
+          <span class="star" data-value="1" onclick="setRating(1)">&#9733;</span>
+          <span class="star" data-value="2" onclick="setRating(2)">&#9733;</span>
+          <span class="star" data-value="3" onclick="setRating(3)">&#9733;</span>
+          <span class="star" data-value="4" onclick="setRating(4)">&#9733;</span>
+          <span class="star" data-value="5" onclick="setRating(5)">&#9733;</span>
+        </div>
+
+        <label style="font-size:0.8rem;font-weight:500;color:#86868b;display:block;margin-bottom:8px;" id="reviewTextLabel">Review</label>
+        <textarea class="review-textarea" id="reviewText" placeholder="เขียนรีวิวที่นี่..."></textarea>
+
+        <label style="font-size:0.8rem;font-weight:500;color:#86868b;display:block;margin-bottom:8px;">Reviewer Name</label>
+        <input type="text" id="reviewerName" value="Somchai K." style="width:100%;padding:10px 12px;border:1px solid #d2d2d7;border-radius:10px;font-family:inherit;font-size:0.875rem;margin-bottom:16px;" />
+
+        <button class="btn btn-primary" onclick="submitReview()" id="reviewSubmitBtn">Submit</button>
+
+        <div class="ai-reply-box" id="aiReplyBox">
+          <h3>AI-Generated Reply</h3>
+          <p id="aiReplyText"></p>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="card review-card">
+        <h2 id="reviewHistoryTitle">Review History</h2>
+        <div id="reviewHistory">
+          <div style="color:#86868b;font-size:0.875rem;text-align:center;padding:20px;">No reviews yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ANALYTICS ═══ -->
+    <div id="tab-analytics" class="tab-content">
+      <div class="stats-row" id="statsRow"></div>
+      <div class="charts-grid" id="chartsGrid"></div>
+    </div>
+
+    <!-- ═══ GOOGLE SHEET DATABASE ═══ -->
+    <div id="tab-sheet" class="tab-content">
+      <div class="sheet-container">
+        <div class="sheet-toolbar">
+          <span class="sheet-icon">📊</span>
+          <span class="sheet-title" id="sheetTitle">AI Studio — Customer Database</span>
+          <span class="sheet-badge">LIVE SYNC</span>
+        </div>
+        <div class="sheet-tabs-bar" id="sheetTabs"></div>
+        <div class="sheet-table-wrap">
+          <table class="sheet-table" id="sheetTable">
+            <thead id="sheetHead"></thead>
+            <tbody id="sheetBody"></tbody>
+          </table>
+        </div>
+        <div class="sheet-status">
+          <span id="sheetRowCount">0 rows</span>
+          <span id="sheetLastUpdate">Last updated: --</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ──────────────────────────────────────────────────
+       GLOBAL STATE
+       ────────────────────────────────────────────────── */
+    let currentRating = 0;
+    let orderCounter = 0;
+    let orders = [];
+    let currentPreset = null;
+    let aiConnected = false;
+    let n8nConnected = false;
+    let chatHistory = []; // recent messages (max 6 = 3 turns)
+    let chatSummary = ''; // compressed summary of older conversation
+    const SUMMARIZE_AFTER = 6; // summarize after 3 turns (6 messages)
+
+    /* ──────────────────────────────────────────────────
+       GUARDRAILS — rate limit, spam, topic, cost
+       ────────────────────────────────────────────────── */
+    const GUARD = {
+      maxMsgPerMin: 8,           // max messages per minute
+      maxMsgPerSession: 100,     // max messages per session
+      maxMsgLength: 500,         // max characters per message
+      maxTokensPerSession: 15000,// approx token budget per session
+      cooldownMs: 1500,          // min time between messages (ms)
+      lastMsgTime: 0,
+      msgTimestamps: [],         // timestamps for rate limiting
+      sessionMsgCount: 0,
+      sessionTokensUsed: 0,
+      duplicateMap: {},          // track repeated messages
+      blocked: false,
+    };
+
+    function guardCheck(message) {
+      const now = Date.now();
+
+      // 1. Cooldown — too fast
+      if (now - GUARD.lastMsgTime < GUARD.cooldownMs) {
+        showToast('⏳ กรุณารอสักครู่ก่อนส่งข้อความถัดไป', 'info');
+        return false;
+      }
+
+      // 2. Message length
+      if (message.length > GUARD.maxMsgLength) {
+        showToast('⚠️ ข้อความยาวเกินไป (สูงสุด ' + GUARD.maxMsgLength + ' ตัวอักษร)', 'error');
+        return false;
+      }
+
+      // 3. Rate limit — messages per minute
+      GUARD.msgTimestamps = GUARD.msgTimestamps.filter(t => now - t < 60000);
+      if (GUARD.msgTimestamps.length >= GUARD.maxMsgPerMin) {
+        showToast('⚠️ ส่งข้อความเร็วเกินไป กรุณารอ 1 นาที', 'error');
+        return false;
+      }
+
+      // 4. Session limit
+      if (GUARD.sessionMsgCount >= GUARD.maxMsgPerSession) {
+        showToast('⚠️ ถึงขีดจำกัดข้อความต่อเซสชัน กรุณารีเฟรชหน้า', 'error');
+        return false;
+      }
+
+      // 5. Token budget
+      if (GUARD.sessionTokensUsed >= GUARD.maxTokensPerSession) {
+        showToast('⚠️ ถึงขีดจำกัด AI ต่อเซสชัน กรุณารีเฟรชหน้า', 'error');
+        return false;
+      }
+
+      // 6. Spam — duplicate message (same message 3+ times)
+      const msgKey = message.trim().toLowerCase();
+      GUARD.duplicateMap[msgKey] = (GUARD.duplicateMap[msgKey] || 0) + 1;
+      if (GUARD.duplicateMap[msgKey] > 2) {
+        showToast('⚠️ ข้อความซ้ำ กรุณาส่งข้อความอื่น', 'info');
+        return false;
+      }
+
+      // 7. Empty/gibberish — too short after trimming
+      const cleaned = message.replace(/[^\u0E00-\u0E7Fa-zA-Z0-9\s]/g, '').trim();
+      if (cleaned.length < 2) {
+        showToast('⚠️ กรุณาพิมพ์ข้อความที่ชัดเจน', 'info');
+        return false;
+      }
+
+      // All checks passed — update counters
+      GUARD.lastMsgTime = now;
+      GUARD.msgTimestamps.push(now);
+      GUARD.sessionMsgCount++;
+      return true;
+    }
+
+    function guardTrackTokens(inputMsg, outputMsg) {
+      // Rough estimate: 1 Thai char ≈ 2 tokens, 1 English word ≈ 1.3 tokens
+      const estimate = (inputMsg.length + (outputMsg || '').length) * 1.5;
+      GUARD.sessionTokensUsed += estimate;
+    }
+
+    /* ──────────────────────────────────────────────────
+       AI CALL — DeepSeek (OpenAI-compatible)
+       ────────────────────────────────────────────────── */
+    async function callAI(systemPrompt, userMessage, history) {
+      const config = DEMO_CONFIG.ai;
+      if (!config || !config.api_key) return null;
+
+      // Build messages: system prompt + summary (if exists) + recent history + new message
+      let fullSystemPrompt = systemPrompt;
+      if (chatSummary) {
+        fullSystemPrompt += '\n\n[สรุปบทสนทนาก่อนหน้า / Previous conversation summary]:\n' + chatSummary;
+      }
+      const messages = [{ role: 'system', content: fullSystemPrompt }];
+      if (history && history.length > 0) {
+        messages.push(...history);
+      }
+      messages.push({ role: 'user', content: userMessage });
+
+      try {
+        // Route through Caddy proxy (/ai/*) to avoid CORS and hide API key
+        const proxyUrl = window.location.origin + '/ai/chat/completions';
+        const directUrl = config.endpoint;
+
+        const body = JSON.stringify({
+          model: config.model,
+          messages: messages,
+          max_tokens: config.max_tokens,
+          temperature: config.temperature,
+        });
+
+        // Try proxy first (no auth needed — Caddy injects it), fall back to direct
+        let res;
+        try {
+          res = await fetch(proxyUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body,
+          });
+          if (!res.ok) throw new Error('proxy ' + res.status);
+        } catch (proxyErr) {
+          // Fallback to direct (may hit CORS)
+          res = await fetch(directUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${config.api_key}`,
+            },
+            body: body,
+          });
+        }
+        const data = await res.json();
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          aiConnected = true;
+          updateAIStatus();
+          return data.choices[0].message.content;
+        }
+        console.warn('AI response format unexpected:', data);
+        return null;
+      } catch (e) {
+        console.warn('AI API failed:', e);
+        return null; // falls back to mock
+      }
+    }
+
+    async function summarizeHistory() {
+      const config = DEMO_CONFIG.ai;
+      if (!config || !config.api_key) {
+        // No AI available — just trim
+        chatHistory = chatHistory.slice(-4);
+        return;
+      }
+
+      // Build conversation text to summarize
+      const convoText = chatHistory.map(m =>
+        (m.role === 'user' ? 'ลูกค้า: ' : 'AI: ') + m.content
+      ).join('\n');
+
+      const existing = chatSummary ? 'สรุปก่อนหน้า: ' + chatSummary + '\n\n' : '';
+
+      try {
+        const res = await fetch(config.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.api_key}`,
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: 'สรุปบทสนทนาต่อไปนี้เป็นภาษาไทย กระชับ 2-3 ประโยค เน้นประเด็นสำคัญ ความต้องการลูกค้า และข้อมูลที่ AI ให้ไป' },
+              { role: 'user', content: existing + convoText },
+            ],
+            max_tokens: 150,
+            temperature: 0.3,
+          }),
+        });
+        const data = await res.json();
+        if (data.choices && data.choices[0]) {
+          chatSummary = data.choices[0].message.content;
+          chatHistory = chatHistory.slice(-2); // keep only last turn
+          console.log('💾 Chat summarized:', chatSummary);
+        }
+      } catch (e) {
+        console.warn('Summarize failed:', e);
+        chatHistory = chatHistory.slice(-4); // fallback: just trim
+      }
+    }
+
+    function getIndustrySystemPrompt() {
+      const industry = DEMO_CONFIG.industry || 'ecommerce';
+      return AI_SYSTEM_PROMPTS[industry] || AI_SYSTEM_PROMPTS.ecommerce;
+    }
+
+    function getReviewSystemPrompt() {
+      return AI_SYSTEM_PROMPTS.review;
+    }
+
+    function getOrderConfirmSystemPrompt() {
+      return AI_SYSTEM_PROMPTS.order_confirm;
+    }
+
+    /* ──────────────────────────────────────────────────
+       AI STATUS INDICATOR
+       ────────────────────────────────────────────────── */
+    function updateAIStatus() {
+      const dot = document.getElementById('aiStatusDot');
+      const text = document.getElementById('aiStatusText');
+      if (!dot || !text) return;
+
+      if (aiConnected) {
+        dot.className = 'dot';
+        dot.style.background = '#30d158';
+        text.textContent = 'AI Connected (DeepSeek)';
+      } else if (n8nConnected) {
+        dot.className = 'dot';
+        dot.style.background = '#fbbf24';
+        text.textContent = 'n8n Connected';
+      } else {
+        dot.className = 'dot offline';
+        dot.style.background = '';
+        text.textContent = 'Offline (Mock Mode)';
+      }
+    }
+
+    async function testAIConnection() {
+      const btn = document.getElementById('testAiBtn');
+      btn.disabled = true;
+      btn.textContent = 'Testing...';
+
+      const result = await callAI(
+        'You are a test assistant. Reply in one short sentence.',
+        'Hello, are you working?'
+      );
+
+      if (result) {
+        aiConnected = true;
+        updateAIStatus();
+        showToast('AI Connected! Response: ' + result.substring(0, 80), 'success');
+      } else {
+        aiConnected = false;
+        updateAIStatus();
+        showToast('AI connection failed — CORS or API error. Will use n8n proxy or mock.', 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Test AI';
+    }
+
+    async function checkAIStatus() {
+      // Quick test to see if DeepSeek API is reachable
+      const result = await callAI('Reply OK.', 'ping');
+      aiConnected = !!result;
+      updateAIStatus();
+    }
+
+    /* ──────────────────────────────────────────────────
+       INIT
+       ────────────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load saved environment and credentials from localStorage
+      const savedEnv = localStorage.getItem('demo_environment');
+      if (savedEnv) DEMO_CONFIG.environment = savedEnv;
+
+      const savedSecret = localStorage.getItem('line_channel_secret');
+      const savedToken = localStorage.getItem('line_access_token');
+      if (savedSecret) DEMO_CONFIG.line_channel_secret = savedSecret;
+      if (savedToken) DEMO_CONFIG.line_channel_access_token = savedToken;
+
+      const savedWebhook = localStorage.getItem('n8n_webhook_url');
+      if (savedWebhook) DEMO_CONFIG.n8n_webhook_url = savedWebhook;
+
+      // Initialize the dashboard
+      initDashboard();
+    });
+
+    function initDashboard() {
+      const industry = DEMO_CONFIG.industry || 'ecommerce';
+      currentPreset = INDUSTRY_PRESETS[industry];
+      if (!currentPreset) {
+        console.warn('Unknown industry: ' + industry + ', falling back to ecommerce');
+        currentPreset = INDUSTRY_PRESETS.ecommerce;
+      }
+
+      // Set CSS variable for accent color
+      document.documentElement.style.setProperty('--accent', currentPreset.accent);
+
+      // Update header
+      document.querySelector('.header h1 .accent').style.color = currentPreset.accent;
+      document.getElementById('headerIndustryName').textContent =
+        currentPreset.name_th + ' ' + currentPreset.name_en + ' Dashboard';
+
+      // Set page title
+      document.title = 'AI Studio — ' + currentPreset.name_en + ' Dashboard';
+
+      // Webhook URL
+      document.getElementById('webhookUrlInput').value = DEMO_CONFIG.n8n_webhook_url;
+
+      // Build dynamic tabs
+      buildTabs();
+
+      // Build LINE simulator
+      buildLineSimulator();
+
+      // Build order form
+      buildOrderForm();
+
+      // Build review form
+      buildReviewForm();
+
+      // Build analytics
+      buildAnalytics();
+
+      // Build sheet
+      buildSheet();
+
+      // Set environment state
+      setEnvironment(DEMO_CONFIG.environment, true);
+
+      // Load production fields
+      document.getElementById('lineChannelSecret').value = DEMO_CONFIG.line_channel_secret;
+      document.getElementById('lineAccessToken').value = DEMO_CONFIG.line_channel_access_token;
+      document.getElementById('webhookUrlDisplay').textContent =
+        DEMO_CONFIG.n8n_webhook_url.replace('/webhook/', '/webhook/line');
+
+      // Check n8n status & AI status
+      checkN8nStatus();
+      checkAIStatus();
+    }
+
+    /* ──────────────────────────────────────────────────
+       ENVIRONMENT SWITCHING
+       ────────────────────────────────────────────────── */
+    function setEnvironment(env, skipSave) {
+      DEMO_CONFIG.environment = env;
+      if (!skipSave) localStorage.setItem('demo_environment', env);
+
+      const badge = document.getElementById('envBadge');
+      const demoBtn = document.querySelector('.demo-btn');
+      const prodBtn = document.querySelector('.prod-btn');
+      const prodSettings = document.getElementById('productionSettings');
+
+      if (env === 'production') {
+        badge.className = 'env-badge live';
+        badge.textContent = 'LIVE';
+        demoBtn.classList.remove('active');
+        prodBtn.classList.add('active');
+        prodSettings.classList.add('visible');
+      } else {
+        badge.className = 'env-badge demo';
+        badge.textContent = 'DEMO';
+        demoBtn.classList.add('active');
+        prodBtn.classList.remove('active');
+        prodSettings.classList.remove('visible');
+      }
+
+      // Update LINE bot subtitle
+      const sub = document.getElementById('lineBotSub');
+      if (sub) {
+        sub.textContent = env === 'production' ? 'LIVE Mode' : 'Demo Bot';
+      }
+    }
+
+    function saveLineCredentials() {
+      const secret = document.getElementById('lineChannelSecret').value.trim();
+      const token = document.getElementById('lineAccessToken').value.trim();
+
+      if (!secret || !token) {
+        showToast('กรุณากรอก Channel Secret และ Access Token', 'error');
+        return;
+      }
+
+      DEMO_CONFIG.line_channel_secret = secret;
+      DEMO_CONFIG.line_channel_access_token = token;
+      localStorage.setItem('line_channel_secret', secret);
+      localStorage.setItem('line_access_token', token);
+
+      showToast('บันทึก LINE credentials เรียบร้อย', 'success');
+    }
+
+    async function testLineConnection() {
+      const token = DEMO_CONFIG.line_channel_access_token || document.getElementById('lineAccessToken').value.trim();
+      if (!token) {
+        showToast('กรุณากรอก Access Token ก่อน', 'error');
+        return;
+      }
+
+      showToast('กำลังทดสอบการเชื่อมต่อ...', 'info');
+
+      try {
+        // Test via n8n webhook
+        const result = await sendWebhook('line-test', {
+          action: 'test_connection',
+          channel_access_token: token,
+        });
+
+        if (result) {
+          showToast('เชื่อมต่อ LINE สำเร็จ!', 'success');
+        } else {
+          showToast('ไม่สามารถเชื่อมต่อ n8n ได้ — ตรวจสอบว่า n8n กำลังทำงาน', 'error');
+        }
+      } catch (e) {
+        showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+      }
+    }
+
+    function showToast(message, type) {
+      const toast = document.getElementById('toast');
+      const icons = { success: '✓', error: '✕', info: 'ℹ' };
+      toast.innerHTML = '<span class="toast-icon">' + (icons[type] || '') + '</span> ' + message;
+      toast.className = 'toast ' + type + ' show';
+      setTimeout(() => { toast.classList.remove('show'); }, 4000);
+    }
+
+    /* ──────────────────────────────────────────────────
+       DYNAMIC TABS
+       ────────────────────────────────────────────────── */
+    function buildTabs() {
+      const tabBar = document.getElementById('tabBar');
+      tabBar.innerHTML = '';
+      currentPreset.tabs.forEach((tab, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+        btn.textContent = tab.icon + ' ' + tab.label;
+        btn.setAttribute('data-tab', tab.id);
+        btn.onclick = () => switchTab(tab.id);
+        tabBar.appendChild(btn);
+      });
+
+      // Show first tab
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      if (currentPreset.tabs.length > 0) {
+        const firstTab = document.getElementById('tab-' + currentPreset.tabs[0].id);
+        if (firstTab) firstTab.classList.add('active');
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      });
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+
+      // Draw charts when analytics tab opens
+      if (tabId === 'analytics') {
+        setTimeout(drawAllCharts, 50);
+      }
+    }
+
+    /* ──────────────────────────────────────────────────
+       CONFIG
+       ────────────────────────────────────────────────── */
+    function saveWebhookUrl() {
+      DEMO_CONFIG.n8n_webhook_url = document.getElementById('webhookUrlInput').value.replace(/\/$/, '') + '/';
+      localStorage.setItem('n8n_webhook_url', DEMO_CONFIG.n8n_webhook_url);
+      document.getElementById('webhookUrlDisplay').textContent =
+        DEMO_CONFIG.n8n_webhook_url.replace('/webhook/', '/webhook/line');
+      checkN8nStatus();
+      showToast('Webhook URL saved', 'success');
+    }
+
+    async function checkN8nStatus() {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      try {
+        const res = await fetch(DEMO_CONFIG.n8n_webhook_url.replace('/webhook/', '/healthz'), { mode: 'no-cors' });
+        dot.className = 'dot';
+        text.textContent = 'n8n Connected';
+        n8nConnected = true;
+      } catch (e) {
+        dot.className = 'dot offline';
+        text.textContent = 'n8n Unreachable';
+        n8nConnected = false;
+      }
+      updateAIStatus();
+    }
+
+    /* ──────────────────────────────────────────────────
+       WEBHOOK HELPER
+       ────────────────────────────────────────────────── */
+    async function sendWebhook(path, data) {
+      if (DEMO_CONFIG.environment === 'demo') {
+        // In demo mode, only send to n8n for processing — no real LINE calls
+        // But still try the webhook for n8n automation testing
+      }
+
+      const url = DEMO_CONFIG.n8n_webhook_url + path;
+      try {
+        // Add environment info to payload
+        const payload = {
+          ...data,
+          _environment: DEMO_CONFIG.environment,
+          _industry: DEMO_CONFIG.industry,
+        };
+
+        if (DEMO_CONFIG.environment === 'production') {
+          payload._line_channel_secret = DEMO_CONFIG.line_channel_secret;
+          payload._line_access_token = DEMO_CONFIG.line_channel_access_token;
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const txt = await res.text();
+        try { return JSON.parse(txt); } catch { return { reply: txt }; }
+      } catch (e) {
+        console.warn('Webhook failed:', e.message);
+        return null;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════
+       LINE SIMULATOR
+       ══════════════════════════════════════════════════ */
+    function buildLineSimulator() {
+      // Bot name & avatar
+      document.getElementById('lineBotAvatar').textContent = currentPreset.botAvatar;
+      document.getElementById('lineBotName').textContent = currentPreset.botName;
+      const welcome = document.getElementById('lineWelcome');
+      const now = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      welcome.innerHTML = '<span class="msg-text">' + escapeHtml(currentPreset.welcomeMessage) + '</span><span class="msg-time">' + now + '</span>';
+
+      // Quick messages
+      const container = document.getElementById('quickMsgs');
+      container.innerHTML = '';
+      currentPreset.quickMessages.forEach(msg => {
+        const div = document.createElement('div');
+        div.className = 'quick-msg';
+        div.textContent = msg;
+        div.onclick = () => quickSend(div);
+        container.appendChild(div);
+      });
+    }
+
+    function getMockReply(message) {
+      const replies = currentPreset.mockReplies;
+      // Exact match
+      if (replies[message]) return replies[message];
+      // Partial match
+      for (const [key, val] of Object.entries(replies)) {
+        if (message.includes(key.substring(0, 10))) return val;
+      }
+      // Default
+      return currentPreset.defaultReply;
+    }
+
+    function addLineMessage(text, type) {
+      const container = document.getElementById('lineMessages');
+      const div = document.createElement('div');
+      div.className = 'line-msg ' + type;
+      if (type === 'typing') {
+        div.innerHTML = '<span class="typing-dots">●●●</span>';
+      } else {
+        const now = new Date();
+        const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        div.innerHTML = '<span class="msg-text">' + escapeHtml(text) + '</span><span class="msg-time">' + time + '</span>';
+      }
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div;
+    }
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    }
+
+    function quickSend(el) {
+      document.getElementById('lineInput').value = el.textContent;
+      sendLineMessage();
+    }
+
+    async function sendLineMessage() {
+      const input = document.getElementById('lineInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Guardrail check
+      if (!guardCheck(message)) return;
+
+      addLineMessage(message, 'user');
+      input.value = '';
+
+      const typing = addLineMessage('กำลังพิมพ์...', 'typing');
+
+      // Flow: Try n8n webhook first → if fails, try DeepSeek direct → if fails, use mock
+      let reply = null;
+
+      // 1. Try n8n webhook
+      const payload = {
+        events: [{
+          type: 'message',
+          message: { type: 'text', text: message },
+          source: { type: 'user', userId: 'demo-user-001' },
+          replyToken: 'demo-reply-token',
+          timestamp: Date.now(),
+        }]
+      };
+
+      const result = await sendWebhook(DEMO_CONFIG.line_webhook_path, payload);
+      if (result) {
+        reply = result.reply || result.message || result.text || null;
+      }
+
+      // 2. Try DeepSeek AI direct (with conversation history)
+      if (!reply) {
+        const aiReply = await callAI(getIndustrySystemPrompt(), message, chatHistory);
+        if (aiReply) {
+          reply = aiReply;
+        }
+      }
+
+      // 3. Fall back to mock
+      if (!reply) {
+        await new Promise(r => setTimeout(r, DEMO_CONFIG.fallback_delay));
+        reply = getMockReply(message);
+      }
+
+      // Store in conversation history
+      chatHistory.push({ role: 'user', content: message });
+      chatHistory.push({ role: 'assistant', content: reply });
+
+      // Auto-summarize when history gets long (every 3 turns)
+      if (chatHistory.length >= SUMMARIZE_AFTER) {
+        summarizeHistory(); // runs in background, non-blocking
+      }
+
+      typing.remove();
+      addLineMessage(reply, 'bot');
+      incrementStat('messages');
+      guardTrackTokens(message, reply);
+
+      // Add to Google Sheet messages log
+      const now = new Date();
+      addSheetRow('messages', [
+        now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+        'Demo User',
+        message.substring(0, 30),
+        (reply || '').substring(0, 35) + '...',
+        reply === getMockReply(message) ? 'Mock' : 'AI ตอบ',
+        ((Date.now() - now.getTime()) / 1000).toFixed(1) + 's',
+      ]);
+
+      // Auto-detect orders from chat and add to order system + sheet
+      detectAndCreateOrder(message, reply);
+    }
+
+    /* ──────────────────────────────────────────────────
+       AUTO-DETECT ORDERS FROM CHAT
+       ────────────────────────────────────────────────── */
+    const ORDER_KEYWORDS_USER = ['สั่ง', 'ซื้อ', 'order', 'จอง', 'เอา', 'ต้องการ', 'สนใจ'];
+    const ORDER_KEYWORDS_AI = ['รับออเดอร์', 'ORD-', 'คำสั่งซื้อ', 'ยืนยัน', 'รวม', 'บาท', 'จัดส่ง', 'สั่งซื้อสำเร็จ', 'รับทราบ', 'เรียบร้อย'];
+
+    function detectAndCreateOrder(userMsg, aiReply) {
+      const userLower = userMsg.toLowerCase();
+      const replyLower = (aiReply || '').toLowerCase();
+
+      // Check if user is ordering AND AI confirmed it
+      const userOrdering = ORDER_KEYWORDS_USER.some(kw => userLower.includes(kw));
+      const aiConfirmed = ORDER_KEYWORDS_AI.some(kw => replyLower.includes(kw));
+
+      if (!userOrdering || !aiConfirmed) return;
+
+      // Extract items from user message (best effort)
+      const items = userMsg.length > 50 ? userMsg.substring(0, 50) : userMsg;
+
+      // Extract price from AI reply if present
+      let price = '—';
+      const priceMatch = aiReply.match(/(\d[\d,]*)\s*บาท/);
+      if (priceMatch) price = '฿' + priceMatch[1];
+
+      const order = {
+        orderId: generateOrderId(),
+        orderName: 'Demo Customer (LINE)',
+        orderItems: items,
+        status: currentPreset.orderForm.timeline[0].id,
+        timestamp: new Date().toLocaleString('th-TH'),
+      };
+
+      orders.unshift(order);
+      renderOrders();
+      incrementStat('orders');
+      if (price !== '—') incrementStat('revenue', parseInt(price.replace(/[^0-9]/g, '')) || 0);
+
+      // Add to Google Sheet
+      addSheetRow('orders', [
+        order.orderId,
+        order.orderName,
+        items.substring(0, 30),
+        price,
+        currentPreset.orderForm.timeline[0].label,
+        order.timestamp,
+        'LINE Chat',
+      ]);
+
+      // Add customer to sheet if new
+      addSheetRow('customers', [
+        'C' + String(Date.now()).slice(-3),
+        'Demo Customer',
+        '—',
+        '@demo-user',
+        'Active',
+        new Date().toISOString().split('T')[0],
+        price,
+      ]);
+
+      showToast('📦 สร้างคำสั่งซื้อ ' + order.orderId + ' จาก LINE Chat อัตโนมัติ', 'success');
+    }
+
+    /* ──────────────────────────────────────────────────
+       LIVE ANALYTICS — updates stats in real-time
+       ────────────────────────────────────────────────── */
+    let liveStats = { messages: 0, orders: 0, reviews: 0, revenue: 0 };
+
+    function incrementStat(type, amount) {
+      liveStats[type] = (liveStats[type] || 0) + (amount || 1);
+      updateLiveStats();
+    }
+
+    function updateLiveStats() {
+      // Update stat cards if they exist
+      const stats = currentPreset?.analytics?.stats;
+      if (!stats) return;
+
+      stats.forEach(stat => {
+        const el = document.getElementById(stat.id);
+        if (!el) return;
+        const base = parseFloat(stat.value.replace(/[^0-9.]/g, '')) || 0;
+
+        if (stat.id.toLowerCase().includes('message')) {
+          el.textContent = (base + liveStats.messages).toLocaleString();
+        } else if (stat.id.toLowerCase().includes('order')) {
+          el.textContent = (base + liveStats.orders).toLocaleString();
+        } else if (stat.id.toLowerCase().includes('review')) {
+          el.textContent = (base + liveStats.reviews).toLocaleString();
+        } else if (stat.id.toLowerCase().includes('revenue')) {
+          el.textContent = '฿' + (base + liveStats.revenue).toLocaleString();
+        }
+      });
+    }
+
+    /* ══════════════════════════════════════════════════
+       ORDER / LEAD / APPOINTMENT / CONTENT SIMULATOR
+       ══════════════════════════════════════════════════ */
+    function buildOrderForm() {
+      const form = currentPreset.orderForm;
+      document.getElementById('orderFormTitle').textContent = form.title;
+
+      // Build form fields
+      const container = document.getElementById('orderFormFields');
+      container.innerHTML = '';
+
+      form.fields.forEach(field => {
+        const div = document.createElement('div');
+        if (field.fullWidth) div.className = 'full-width';
+
+        const label = document.createElement('label');
+        label.textContent = field.label;
+        div.appendChild(label);
+
+        if (field.type === 'textarea') {
+          const textarea = document.createElement('textarea');
+          textarea.id = field.id;
+          textarea.textContent = field.default;
+          div.appendChild(textarea);
+        } else {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = field.id;
+          input.value = field.default;
+          div.appendChild(input);
+        }
+
+        container.appendChild(div);
+      });
+
+      // Add buttons
+      const btnDiv = document.createElement('div');
+      btnDiv.className = 'full-width';
+      btnDiv.style.cssText = 'display:flex;gap:12px;';
+      btnDiv.innerHTML = `
+        <button class="btn btn-primary" onclick="createOrder()">Create</button>
+        <button class="btn btn-outline" onclick="resetOrderForm()">Reset</button>
+      `;
+      container.appendChild(btnDiv);
+
+      // Build timeline
+      buildTimeline();
+
+      // History title
+      document.getElementById('orderHistoryTitle').textContent = form.title.replace('สร้าง', '').replace('Create', 'History');
+    }
+
+    function buildTimeline() {
+      const timeline = document.getElementById('orderTimeline');
+      timeline.innerHTML = '';
+      const steps = currentPreset.orderForm.timeline;
+
+      steps.forEach((step, i) => {
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'order-step';
+        stepDiv.innerHTML = `
+          <div class="circle" id="step-${step.id}">${step.icon}</div>
+          <span>${step.label}</span>
+        `;
+        timeline.appendChild(stepDiv);
+
+        if (i < steps.length - 1) {
+          const conn = document.createElement('div');
+          conn.className = 'order-connector';
+          conn.id = 'conn-' + (i + 1);
+          timeline.appendChild(conn);
+        }
+      });
+    }
+
+    function generateOrderId() {
+      orderCounter++;
+      const prefix = currentPreset.orderForm.itemIdPrefix;
+      return prefix + '-' + String(Date.now()).slice(-6) + '-' + String(orderCounter).padStart(3, '0');
+    }
+
+    async function createOrder() {
+      const fields = currentPreset.orderForm.fields;
+      const order = {
+        orderId: generateOrderId(),
+        status: currentPreset.orderForm.timeline[0].id,
+        timestamp: new Date().toLocaleString('th-TH'),
+      };
+
+      fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        order[f.id] = el ? (el.value || el.textContent) : '';
+      });
+
+      orders.unshift(order);
+      renderOrders();
+      incrementStat('orders');
+
+      // Add to Google Sheet
+      addSheetRow('orders', [
+        order.orderId,
+        order.orderName || '',
+        (order.orderItems || '').substring(0, 30),
+        '—',
+        currentPreset.orderForm.timeline[0].label,
+        order.timestamp,
+        'LINE Demo',
+      ]);
+
+      // Show timeline
+      document.getElementById('orderTimelineCard').style.display = 'block';
+      animateOrderTimeline(order);
+
+      // Send webhook
+      const result = await sendWebhook(DEMO_CONFIG.order_webhook_path, order);
+      if (result) {
+        console.log('Order webhook response:', result);
+        showToast(result.reply || result.message || 'Order sent to n8n!', 'success');
+      } else {
+        // n8n is down — try DeepSeek for confirmation message
+        const orderSummary = `Order ID: ${order.orderId}\nCustomer: ${order.orderName}\nItems: ${order.orderItems}`;
+        const aiReply = await callAI(
+          getOrderConfirmSystemPrompt(),
+          orderSummary
+        );
+        if (aiReply) {
+          showToast('AI: ' + aiReply.substring(0, 100), 'info');
+        } else {
+          showToast('Order created (offline mode)', 'info');
+        }
+      }
+    }
+
+    async function animateOrderTimeline(order) {
+      const steps = currentPreset.orderForm.timeline;
+      const stepIds = steps.map(s => 'step-' + s.id);
+      const connIds = [];
+      for (let i = 1; i < steps.length; i++) connIds.push('conn-' + i);
+
+      // Reset
+      stepIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = 'circle';
+      });
+      connIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = 'order-connector';
+      });
+
+      for (let i = 0; i < steps.length; i++) {
+        await new Promise(r => setTimeout(r, 1200));
+        const el = document.getElementById(stepIds[i]);
+        if (el) el.classList.add('active');
+        if (i > 0) {
+          const prev = document.getElementById(stepIds[i - 1]);
+          if (prev) {
+            prev.classList.remove('active');
+            prev.classList.add('done');
+            prev.innerHTML = '&#10003;';
+          }
+          const conn = document.getElementById(connIds[i - 1]);
+          if (conn) conn.classList.add('active');
+        }
+        order.status = steps[i].id;
+        renderOrders();
+      }
+
+      await new Promise(r => setTimeout(r, 800));
+      const last = document.getElementById(stepIds[steps.length - 1]);
+      if (last) {
+        last.classList.remove('active');
+        last.classList.add('done');
+        last.innerHTML = '&#10003;';
+      }
+    }
+
+    function renderOrders() {
+      const container = document.getElementById('orderList');
+      if (orders.length === 0) {
+        container.innerHTML = '<div style="color:#86868b;font-size:0.875rem;text-align:center;padding:20px;">No items yet.</div>';
+        return;
+      }
+      container.innerHTML = orders.map(o => {
+        const statusClass = 'status-' + o.status;
+        const step = currentPreset.orderForm.timeline.find(s => s.id === o.status);
+        const statusLabel = step ? step.label : o.status;
+        const name = o.orderName || '';
+        const items = o.orderItems || '';
+        const time = o.timestamp || new Date().toLocaleString('th-TH');
+        return `<div class="order-item">
+          <div class="order-left">
+            <span class="order-id">${o.orderId}</span>
+            <span class="order-detail">${name} — ${items.substring(0, 50)}</span>
+            <span class="order-time">${time}</span>
+          </div>
+          <span class="order-status ${statusClass}">${statusLabel}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function resetOrderForm() {
+      currentPreset.orderForm.fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (el) {
+          if (f.type === 'textarea') {
+            el.textContent = f.default;
+            el.value = f.default;
+          } else {
+            el.value = f.default;
+          }
+        }
+      });
+    }
+
+    /* ══════════════════════════════════════════════════
+       REVIEW / FEEDBACK / ENGAGEMENT SIMULATOR
+       ══════════════════════════════════════════════════ */
+    function buildReviewForm() {
+      const ctx = currentPreset.reviewContext;
+      document.getElementById('reviewTitle').textContent = ctx.title;
+      document.getElementById('reviewSubtitle').textContent = ctx.subtitle;
+      document.getElementById('reviewText').placeholder = ctx.placeholder;
+      document.getElementById('reviewText').value = ctx.defaultReview;
+    }
+
+    function setRating(value) {
+      currentRating = value;
+      document.querySelectorAll('#starRating .star').forEach((star, i) => {
+        star.classList.toggle('active', i < value);
+      });
+    }
+
+    async function submitReview() {
+      const rating = currentRating || 5;
+      const text = document.getElementById('reviewText').value;
+      const name = document.getElementById('reviewerName').value;
+      const btn = document.getElementById('reviewSubmitBtn');
+
+      if (!text.trim()) { alert('กรุณาเขียนรีวิว'); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Sending...';
+
+      let reply = null;
+
+      // 1. Try n8n webhook
+      const payload = {
+        reviewer: name,
+        rating: rating,
+        text: text,
+        timestamp: new Date().toISOString(),
+        source: 'review_demo',
+      };
+
+      const result = await sendWebhook(DEMO_CONFIG.review_webhook_path, payload);
+      if (result) {
+        reply = result.reply || result.message || null;
+      }
+
+      // 2. Try DeepSeek AI
+      if (!reply) {
+        const aiReply = await callAI(
+          getReviewSystemPrompt(),
+          `Rating: ${rating} stars. Review: ${text}`
+        );
+        if (aiReply) reply = aiReply;
+      }
+
+      // 3. Fall back to mock
+      if (!reply) {
+        await new Promise(r => setTimeout(r, DEMO_CONFIG.fallback_delay));
+        const mockReplies = currentPreset.reviewContext.mockReplies;
+        reply = mockReplies[rating] || mockReplies[3];
+      }
+
+      document.getElementById('aiReplyText').textContent = reply;
+      document.getElementById('aiReplyBox').classList.add('visible');
+
+      addReviewToHistory(name, rating, text, reply);
+      incrementStat('reviews');
+
+      // Add to Google Sheet reviews
+      addSheetRow('reviews', [
+        new Date().toISOString().split('T')[0],
+        name,
+        '⭐'.repeat(rating),
+        text.substring(0, 30),
+        (reply || '').substring(0, 30) + '...',
+        'Demo',
+      ]);
+
+      btn.disabled = false;
+      btn.textContent = 'Submit';
+    }
+
+    function addReviewToHistory(name, rating, text, reply) {
+      const container = document.getElementById('reviewHistory');
+      if (container.querySelector('div[style]') && container.children.length === 1) {
+        container.innerHTML = '';
+      }
+
+      const stars = Array(5).fill(0).map((_, i) =>
+        '<span style="color:' + (i < rating ? '#fbbf24' : '#d2d2d7') + ';">&#9733;</span>'
+      ).join('');
+
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:12px 0;border-bottom:1px solid #f0f0f2;';
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <strong style="font-size:0.875rem;">${name}</strong>
+          <span>${stars}</span>
+        </div>
+        <p style="font-size:0.85rem;color:#374151;margin-bottom:6px;">${text}</p>
+        <div style="background:#f0f7ff;padding:8px 12px;border-radius:8px;font-size:0.8rem;color:${currentPreset.accent};">
+          <strong>AI Reply:</strong> ${reply}
+        </div>
+      `;
+      container.prepend(div);
+    }
+
+    /* ══════════════════════════════════════════════════
+       ANALYTICS
+       ══════════════════════════════════════════════════ */
+    function buildAnalytics() {
+      const analytics = currentPreset.analytics;
+
+      // Stats row
+      const statsRow = document.getElementById('statsRow');
+      statsRow.innerHTML = '';
+      analytics.stats.forEach(stat => {
+        const card = document.createElement('div');
+        card.className = 'stat-card';
+        card.innerHTML = `
+          <div class="stat-value" id="${stat.id}">${stat.value}</div>
+          <div class="stat-label">${stat.label}</div>
+          <div class="stat-change ${stat.direction === 'up' ? 'up' : 'down'}">${stat.direction === 'up' ? '+' : ''}${stat.change} vs yesterday</div>
+        `;
+        statsRow.appendChild(card);
+      });
+
+      // Charts grid
+      const chartsGrid = document.getElementById('chartsGrid');
+      chartsGrid.innerHTML = '';
+      analytics.charts.forEach(chart => {
+        const container = document.createElement('div');
+        container.className = 'chart-container';
+        container.innerHTML = `
+          <h3>${chart.title}</h3>
+          <canvas id="${chart.id}"></canvas>
+        `;
+        chartsGrid.appendChild(container);
+      });
+    }
+
+    function drawAllCharts() {
+      const charts = currentPreset.analytics.charts;
+      charts.forEach(chart => {
+        const canvas = document.getElementById(chart.id);
+        if (!canvas) return;
+
+        if (chart.type === 'bar') {
+          drawBarChart(chart.id, chart.labels, chart.data, chart.color);
+        } else if (chart.type === 'line') {
+          drawLineChart(chart.id, chart.labels, chart.data, chart.color);
+        } else if (chart.type === 'hbar') {
+          drawHBarChart(chart.id, chart.labels, chart.data, chart.colors);
+        }
+      });
+    }
+
+    function getCtx(id) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return null;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = 200 * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = '200px';
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      return { ctx, w: rect.width, h: 200 };
+    }
+
+    function drawBarChart(id, labels, data, color) {
+      const result = getCtx(id);
+      if (!result) return;
+      const { ctx, w, h } = result;
+      const max = Math.max(...data) * 1.15;
+      const barW = (w - 60) / labels.length;
+      const pad = 40;
+
+      ctx.fillStyle = '#86868b';
+      ctx.font = '11px Bai Jamjuree';
+      ctx.textAlign = 'center';
+
+      data.forEach((val, i) => {
+        const barH = (val / max) * (h - pad - 20);
+        const x = 30 + i * barW + barW * 0.15;
+        const bw = barW * 0.7;
+        const y = h - pad - barH;
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        roundRect(ctx, x, y, bw, barH, 4);
+        ctx.fill();
+
+        ctx.fillStyle = '#86868b';
+        ctx.fillText(labels[i], x + bw / 2, h - pad + 14);
+        ctx.fillText(val.toLocaleString(), x + bw / 2, y - 6);
+      });
+    }
+
+    function drawLineChart(id, labels, data, color) {
+      const result = getCtx(id);
+      if (!result) return;
+      const { ctx, w, h } = result;
+      const max = Math.max(...data) * 1.15;
+      const pad = 40;
+      const stepX = (w - 60) / (labels.length - 1);
+
+      // Fill area
+      ctx.beginPath();
+      ctx.moveTo(30, h - pad - (data[0] / max) * (h - pad - 20));
+      data.forEach((val, i) => {
+        ctx.lineTo(30 + i * stepX, h - pad - (val / max) * (h - pad - 20));
+      });
+      ctx.lineTo(30 + (data.length - 1) * stepX, h - pad);
+      ctx.lineTo(30, h - pad);
+      ctx.closePath();
+      ctx.fillStyle = color + '18';
+      ctx.fill();
+
+      // Line
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      data.forEach((val, i) => {
+        const x = 30 + i * stepX;
+        const y = h - pad - (val / max) * (h - pad - 20);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Dots & labels
+      ctx.fillStyle = '#86868b';
+      ctx.font = '11px Bai Jamjuree';
+      ctx.textAlign = 'center';
+      data.forEach((val, i) => {
+        const x = 30 + i * stepX;
+        const y = h - pad - (val / max) * (h - pad - 20);
+
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        ctx.fillStyle = '#86868b';
+        ctx.fillText(labels[i], x, h - pad + 14);
+      });
+    }
+
+    function drawHBarChart(id, labels, data, colors) {
+      const result = getCtx(id);
+      if (!result) return;
+      const { ctx, w, h } = result;
+      const max = Math.max(...data) * 1.15;
+      const barH = (h - 20) / labels.length;
+
+      labels.forEach((label, i) => {
+        const barW = (data[i] / max) * (w - 120);
+        const y = 10 + i * barH;
+
+        ctx.fillStyle = '#86868b';
+        ctx.font = '11px Bai Jamjuree';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, 60, y + barH / 2);
+
+        ctx.fillStyle = colors[i];
+        ctx.beginPath();
+        roundRect(ctx, 70, y + 4, barW, barH - 8, 4);
+        ctx.fill();
+
+        ctx.fillStyle = '#1d1d1f';
+        ctx.textAlign = 'left';
+        ctx.fillText(data[i], 76 + barW, y + barH / 2);
+      });
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+    }
+
+    /* ══════════════════════════════════════════════════
+       GOOGLE SHEET DATABASE SIMULATOR
+       ══════════════════════════════════════════════════ */
+    const SHEET_DATA = {
+      products: {
+        label: '📦 สินค้า Products',
+        columns: ['SKU', 'ชื่อสินค้า Name', 'ราคา Price', 'สต็อก Stock', 'หมวด Category', 'รายละเอียด Description'],
+        rows: [], // loaded from products.json
+        editable: true,
+      },
+      customers: {
+        label: 'ลูกค้า Customers',
+        columns: ['ID', 'ชื่อ Name', 'เบอร์โทร Phone', 'LINE ID', 'สถานะ Status', 'วันที่สมัคร Joined', 'ยอดรวม Total'],
+        rows: [
+          ['C001', 'สมชาย ใจดี', '081-234-5678', '@somchai_d', 'Active', '2026-01-15', '฿45,200'],
+          ['C002', 'สมหญิง รักสวย', '089-876-5432', '@somying_r', 'Active', '2026-01-22', '฿28,900'],
+          ['C003', 'วิชัย เก่งมาก', '062-111-2222', '@wichai_k', 'Active', '2026-02-03', '฿67,500'],
+          ['C004', 'นิภา สุขใจ', '095-333-4444', '@nipa_s', 'Inactive', '2026-02-10', '฿12,100'],
+          ['C005', 'ธนพล ดีเด่น', '086-555-6666', '@thanapol', 'Active', '2026-02-18', '฿89,300'],
+          ['C006', 'ปิยะ มั่นคง', '091-777-8888', '@piya_m', 'Active', '2026-03-01', '฿34,600'],
+          ['C007', 'กัญญา ใสสะอาด', '083-999-0000', '@kanya_s', 'VIP', '2026-03-05', '฿156,200'],
+          ['C008', 'อรุณ ศรีสมาน', '087-222-3333', '@arun_s', 'Active', '2026-03-10', '฿21,800'],
+        ],
+      },
+      orders: {
+        label: 'คำสั่งซื้อ Orders',
+        columns: ['Order ID', 'ลูกค้า Customer', 'รายการ Items', 'ยอดรวม Total', 'สถานะ Status', 'วันที่ Date', 'ช่องทาง Channel'],
+        rows: [
+          ['ORD-0301', 'สมชาย ใจดี', 'X200 Pro x1', '฿12,500', 'จัดส่งแล้ว', '2026-03-15', 'LINE'],
+          ['ORD-0302', 'วิชัย เก่งมาก', 'เคสกันกระแทก x3', '฿2,970', 'กำลังจัดเตรียม', '2026-03-15', 'LINE'],
+          ['ORD-0303', 'กัญญา ใสสะอาด', 'X200 Pro x2, สาย Type-C x2', '฿25,580', 'จัดส่งแล้ว', '2026-03-16', 'Website'],
+          ['ORD-0304', 'ธนพล ดีเด่น', 'หูฟัง BT700 x1', '฿3,490', 'รับออเดอร์', '2026-03-16', 'LINE'],
+          ['ORD-0305', 'ปิยะ มั่นคง', 'แท่นชาร์จ x1, สาย x2', '฿1,890', 'จัดส่งแล้ว', '2026-03-17', 'LINE'],
+        ],
+      },
+      messages: {
+        label: 'ข้อความ Messages',
+        columns: ['เวลา Time', 'ลูกค้า Customer', 'ข้อความ Message', 'AI Reply', 'สถานะ Status', 'Response Time'],
+        rows: [
+          ['09:15', 'สมชาย ใจดี', 'สินค้า X200 ราคาเท่าไหร่', 'สินค้า X200 ราคา 12,500 บาทครับ...', 'AI ตอบ', '1.2s'],
+          ['09:32', 'สมหญิง รักสวย', 'มีส่วนลดไหมคะ', 'ตอนนี้มีโปรลด 10% ครับ...', 'AI ตอบ', '1.5s'],
+          ['10:01', 'วิชัย เก่งมาก', 'สั่งเคส 3 ชิ้น', 'รับออเดอร์ ORD-0302 เคส 3 ชิ้น...', 'AI ตอบ', '2.1s'],
+          ['10:45', 'นิภา สุขใจ', 'ขอคุยกับพนักงาน', '—', 'ส่งต่อ Staff', '0.8s'],
+          ['11:20', 'ธนพล ดีเด่น', 'หูฟังรุ่นไหนดี', 'แนะนำ BT700 ครับ เสียงดี...', 'AI ตอบ', '1.8s'],
+          ['13:05', 'ปิยะ มั่นคง', 'เช็คสถานะคำสั่งซื้อ', 'ORD-0305 จัดส่งแล้วครับ...', 'AI ตอบ', '1.1s'],
+        ],
+      },
+      reviews: {
+        label: 'รีวิว Reviews',
+        columns: ['วันที่ Date', 'ลูกค้า Customer', 'คะแนน Rating', 'รีวิว Review', 'AI Reply', 'Platform'],
+        rows: [
+          ['2026-03-15', 'สมชาย ใจดี', '⭐⭐⭐⭐⭐', 'สินค้าดีมาก ส่งไว', 'ขอบคุณมากครับ! ดีใจที่ถูกใจ...', 'Google'],
+          ['2026-03-15', 'นิภา สุขใจ', '⭐⭐⭐', 'สินค้าโอเค แต่ส่งช้า', 'ขออภัยครับ จะปรับปรุงการจัดส่ง...', 'Google'],
+          ['2026-03-16', 'วิชัย เก่งมาก', '⭐⭐⭐⭐⭐', 'แพ็คสวย ของแท้ แนะนำ', 'ขอบคุณสำหรับรีวิว 5 ดาว!...', 'Facebook'],
+          ['2026-03-17', 'กัญญา ใสสะอาด', '⭐⭐⭐⭐', 'คุณภาพดี ราคาเหมาะสม', 'ขอบคุณครับ! เรามุ่งพัฒนาเสมอ...', 'Google'],
+        ],
+      },
+    };
+
+    let currentSheetTab = 'customers';
+
+    async function buildSheet() {
+      const title = document.getElementById('sheetTitle');
+      title.textContent = currentPreset.name_en + ' — AI Database';
+
+      // Load products from products.json
+      try {
+        const res = await fetch('/products.json');
+        const products = await res.json();
+        SHEET_DATA.products.rows = products.map(p => [
+          p.sku, p.name, '฿' + p.price.toLocaleString(), p.stock, p.category, p.description
+        ]);
+      } catch (e) { console.warn('Could not load products.json:', e); }
+
+      const tabBar = document.getElementById('sheetTabs');
+      tabBar.innerHTML = '';
+      Object.keys(SHEET_DATA).forEach((key, i) => {
+        const tab = document.createElement('div');
+        tab.className = 'sheet-tab' + (i === 0 ? ' active' : '');
+        tab.textContent = SHEET_DATA[key].label;
+        tab.onclick = () => switchSheetTab(key);
+        tabBar.appendChild(tab);
+      });
+
+      renderSheetData('products');
+    }
+
+    function switchSheetTab(tabKey) {
+      currentSheetTab = tabKey;
+      document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+      const tabs = document.querySelectorAll('.sheet-tab');
+      const keys = Object.keys(SHEET_DATA);
+      const idx = keys.indexOf(tabKey);
+      if (tabs[idx]) tabs[idx].classList.add('active');
+      renderSheetData(tabKey);
+    }
+
+    function renderSheetData(tabKey) {
+      const data = SHEET_DATA[tabKey];
+      const head = document.getElementById('sheetHead');
+      const body = document.getElementById('sheetBody');
+
+      head.innerHTML = '<tr><th>#</th>' + data.columns.map(c => '<th>' + c + '</th>').join('') + '</tr>';
+      body.innerHTML = data.rows.map((row, i) =>
+        '<tr><td>' + (i + 1) + '</td>' + row.map(cell => '<td>' + cell + '</td>').join('') + '</tr>'
+      ).join('');
+
+      document.getElementById('sheetRowCount').textContent = data.rows.length + ' rows';
+      document.getElementById('sheetLastUpdate').textContent = 'Last updated: ' + new Date().toLocaleTimeString('th-TH');
+    }
+
+    // Add row to sheet when order/review/message happens
+    function addSheetRow(tabKey, row) {
+      if (!SHEET_DATA[tabKey]) return;
+      SHEET_DATA[tabKey].rows.unshift(row);
+      if (currentSheetTab === tabKey) {
+        renderSheetData(tabKey);
+        // Flash new row
+        const tbody = document.getElementById('sheetBody');
+        if (tbody.firstChild) {
+          tbody.firstChild.querySelectorAll('td').forEach(td => td.classList.add('cell-new'));
+        }
+      }
+      showToast('📋 ข้อมูลใหม่เพิ่มใน ' + SHEET_DATA[tabKey].label, 'info');
+    }
+  </script>
+</body>
+</html>

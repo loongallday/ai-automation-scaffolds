@@ -1,0 +1,99 @@
+{
+  "name": "Lead Scoring",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-demo",
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "name": "Lead Webhook",
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-lead-data",
+              "name": "leadData",
+              "value": "={{ JSON.stringify($json.body) }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-lead",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Extract Lead Data",
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=ข้อมูล Lead:\n{{ $json.leadData }}",
+        "options": {
+          "systemMessage": "คุณเป็น AI ที่วิเคราะห์และให้คะแนน lead อสังหาริมทรัพย์ จาก 1-10 ตามงบประมาณ ความพร้อม ทำเล ที่สนใจ ตอบเป็นภาษาไทย พร้อมเหตุผล"
+        }
+      },
+      "id": "agent-lead",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "name": "AI Agent",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "model": "deepseek-chat",
+        "options": {
+          "baseURL": "https://api.deepseek.com",
+          "temperature": 0.7
+        }
+      },
+      "id": "llm-lead",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "name": "DeepSeek Chat",
+      "position": [600, 500],
+      "credentials": {
+        "openAiApi": {
+          "id": "deepseek-cred",
+          "name": "DeepSeek API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: $json.output }) }}"
+      },
+      "id": "respond-lead",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "name": "Respond to Webhook",
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [[{ "node": "Extract Lead Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Lead Data": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "DeepSeek Chat": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}

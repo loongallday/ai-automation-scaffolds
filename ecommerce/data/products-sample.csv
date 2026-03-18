@@ -1,0 +1,11 @@
+sku,product_name,description,category,price_thb,stock_qty,min_stock_threshold
+SKU001,iPhone 15 Pro Max 256GB,Apple iPhone 15 Pro Max 256GB Natural Titanium,Smartphone,48900,15,5
+SKU002,Samsung Galaxy S24 Ultra,Samsung Galaxy S24 Ultra 256GB Titanium Gray,Smartphone,44900,20,5
+SKU003,AirPods Pro 2,Apple AirPods Pro 2nd Gen USB-C,Audio,8990,50,10
+SKU004,Galaxy Buds3 Pro,Samsung Galaxy Buds3 Pro Silver,Audio,7490,30,10
+SKU005,iPad Air M2,Apple iPad Air M2 11-inch 128GB WiFi,Tablet,22900,10,3
+SKU006,MacBook Air M3,Apple MacBook Air 15-inch M3 256GB,Laptop,44900,8,3
+SKU007,Samsung Galaxy Tab S9,Samsung Galaxy Tab S9 128GB WiFi,Tablet,23900,12,3
+SKU008,Apple Watch Series 9,Apple Watch Series 9 GPS 45mm Midnight,Wearable,15900,25,5
+SKU009,USB-C Hub 7-in-1,Anker USB-C Hub 7-in-1 Adapter,Accessory,1590,100,20
+SKU010,MagSafe Charger,Apple MagSafe Wireless Charger,Accessory,1390,80,15

@@ -1,0 +1,56 @@
+# Caddy Reverse Proxy Template
+# Replace {$DOMAIN} with your actual domain or set as environment variable
+# Caddy automatically obtains and renews SSL certificates via Let's Encrypt
+
+n8n.{$DOMAIN} {
+    reverse_proxy n8n:5678
+
+    header {
+        # Security headers
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    log {
+        output file /var/log/caddy/n8n.log
+        format json
+    }
+}
+
+flowise.{$DOMAIN} {
+    reverse_proxy flowise:3000
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    log {
+        output file /var/log/caddy/flowise.log
+        format json
+    }
+}
+
+# Demo Dashboard — served as static files at /demo
+n8n.{$DOMAIN}/demo* {
+    uri strip_prefix /demo
+    root * /srv/demo-dashboard
+    file_server
+}
+
+# Optional: Dify (for creator stack)
+# dify.{$DOMAIN} {
+#     reverse_proxy dify:3000
+# }
+
+# Optional: Qdrant dashboard (for legal stack)
+# qdrant.{$DOMAIN} {
+#     reverse_proxy qdrant:6333
+#     basicauth {
+#         admin $2a$14$HASHED_PASSWORD_HERE
+#     }
+# }

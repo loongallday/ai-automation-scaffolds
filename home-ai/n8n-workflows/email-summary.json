@@ -1,0 +1,127 @@
+{
+  "name": "Email Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "cron-email",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "name": "Daily 8AM",
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:7777/api/mock/email-inbox",
+        "options": {}
+      },
+      "id": "http-fetch-emails",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Fetch Emails",
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=อีเมลที่ได้รับ:\n{{ JSON.stringify($json) }}",
+        "options": {
+          "systemMessage": "คุณเป็น AI ที่สรุปอีเมลสำคัญประจำวัน จัดหมวดหมู่ ไฮไลท์เรื่องเร่งด่วน ตอบเป็นภาษาไทย"
+        }
+      },
+      "id": "agent-email",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "name": "AI Agent",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "model": "deepseek-chat",
+        "options": {
+          "baseURL": "https://api.deepseek.com",
+          "temperature": 0.7
+        }
+      },
+      "id": "llm-email",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "name": "DeepSeek Chat",
+      "position": [600, 500],
+      "credentials": {
+        "openAiApi": {
+          "id": "deepseek-cred",
+          "name": "DeepSeek API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-email-summary",
+              "name": "summary",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-format-email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Format Output",
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://notify-api.line.me/api/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.LINE_NOTIFY_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "message", "value": "={{ $json.summary }}" }
+          ]
+        }
+      },
+      "id": "http-send-line-email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Send Summary",
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Daily 8AM": {
+      "main": [[{ "node": "Fetch Emails", "type": "main", "index": 0 }]]
+    },
+    "Fetch Emails": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "DeepSeek Chat": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Format Output", "type": "main", "index": 0 }]]
+    },
+    "Format Output": {
+      "main": [[{ "node": "Send Summary", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}

@@ -1,0 +1,124 @@
+{
+  "name": "Daily Restaurant Sales Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      },
+      "id": "cron-daily-sales",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "name": "Daily 8AM",
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:7777/api/mock/restaurant-sales",
+        "options": {}
+      },
+      "id": "http-fetch-restaurant-sales",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Fetch Sales Data",
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=ข้อมูลยอดขายร้านอาหารวันนี้:\n{{ JSON.stringify($json) }}",
+        "options": {
+          "systemMessage": "คุณเป็น AI ที่สรุปยอดขายร้านอาหารประจำวัน เมนูขายดี ช่วงเวลาที่ขายดี ตอบเป็นภาษาไทย"
+        }
+      },
+      "id": "agent-daily-sales",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "name": "AI Agent",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "model": "deepseek-chat",
+        "options": {
+          "baseURL": "https://api.deepseek.com",
+          "temperature": 0.7
+        }
+      },
+      "id": "llm-daily-sales",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "name": "DeepSeek Chat",
+      "position": [600, 500],
+      "credentials": {
+        "openAiApi": {
+          "id": "deepseek-cred",
+          "name": "DeepSeek API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-sales-report",
+              "name": "report",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-format-sales",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Format Output",
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Authorization", "value": "Bearer {{ $env.LINE_CHANNEL_ACCESS_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"to\":\"{{ $env.ADMIN_LINE_USER_ID }}\",\"messages\":[{\"type\":\"text\",\"text\":\"{{ $json.report }}\"}]}"
+      },
+      "id": "http-send-line-sales",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "name": "Send to LINE",
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Daily 8AM": {
+      "main": [[{ "node": "Fetch Sales Data", "type": "main", "index": 0 }]]
+    },
+    "Fetch Sales Data": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "DeepSeek Chat": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Format Output", "type": "main", "index": 0 }]]
+    },
+    "Format Output": {
+      "main": [[{ "node": "Send to LINE", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}
