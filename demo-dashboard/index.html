@@ -573,117 +573,6 @@
     }
 
     /* ════════════════════════════════════════════════════
-       GOOGLE SHEET SIMULATOR
-       ════════════════════════════════════════════════════ */
-    .sheet-container {
-      background: #fff;
-      border-radius: 12px;
-      border: 1px solid #e5e5e7;
-      overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    }
-    .sheet-toolbar {
-      background: #188038;
-      color: #fff;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-    .sheet-toolbar .sheet-icon { font-size: 1.2rem; }
-    .sheet-toolbar .sheet-title { flex: 1; font-weight: 600; }
-    .sheet-toolbar .sheet-badge {
-      background: rgba(255,255,255,0.2);
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 0.7rem;
-    }
-    .sheet-tabs-bar {
-      background: #f1f3f4;
-      display: flex;
-      gap: 0;
-      padding: 0 8px;
-      border-bottom: 1px solid #e5e5e7;
-      overflow-x: auto;
-    }
-    .sheet-tab {
-      padding: 8px 20px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: #5f6368;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      transition: all 0.15s;
-    }
-    .sheet-tab:hover { background: #e8eaed; }
-    .sheet-tab.active { color: #188038; border-bottom-color: #188038; background: #fff; }
-    .sheet-table-wrap {
-      overflow-x: auto;
-      max-height: 500px;
-      overflow-y: auto;
-    }
-    .sheet-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-    }
-    .sheet-table th {
-      background: #f8f9fa;
-      padding: 8px 12px;
-      text-align: left;
-      font-weight: 600;
-      color: #5f6368;
-      border-bottom: 2px solid #e5e5e7;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      white-space: nowrap;
-    }
-    .sheet-table th:first-child {
-      background: #e8eaed;
-      color: #80868b;
-      text-align: center;
-      width: 40px;
-    }
-    .sheet-table td {
-      padding: 7px 12px;
-      border-bottom: 1px solid #f1f3f4;
-      color: #202124;
-      white-space: nowrap;
-    }
-    .sheet-table td:first-child {
-      background: #f8f9fa;
-      color: #80868b;
-      text-align: center;
-      font-size: 0.7rem;
-    }
-    .sheet-table tr:hover td { background: #e8f0fe; }
-    .sheet-table tr:hover td:first-child { background: #d2e3fc; }
-    .sheet-table .cell-highlight {
-      background: #e6f4ea;
-      font-weight: 500;
-      color: #188038;
-    }
-    .sheet-table .cell-new {
-      animation: cellFlash 1s ease-out;
-    }
-    @keyframes cellFlash {
-      0% { background: #fbbc04; }
-      100% { background: transparent; }
-    }
-    .sheet-status {
-      padding: 8px 16px;
-      font-size: 0.7rem;
-      color: #80868b;
-      border-top: 1px solid #f1f3f4;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    /* ════════════════════════════════════════════════════
        ANALYTICS
        ════════════════════════════════════════════════════ */
     .charts-grid {
@@ -949,25 +838,17 @@
       <div class="charts-grid" id="chartsGrid"></div>
     </div>
 
-    <!-- ═══ GOOGLE SHEET DATABASE ═══ -->
+    <!-- ═══ GOOGLE SHEET (REAL) ═══ -->
     <div id="tab-sheet" class="tab-content">
-      <div class="sheet-container">
-        <div class="sheet-toolbar">
-          <span class="sheet-icon">📊</span>
-          <span class="sheet-title" id="sheetTitle">AI Studio — Customer Database</span>
-          <span class="sheet-badge">LIVE SYNC</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <h2 style="font-size:1.1rem;font-weight:600">📊 Google Sheet — Live Database</h2>
+          <p style="font-size:0.8rem;color:#86868b;margin-top:4px">AI อ่านข้อมูลจาก Sheet นี้แบบ real-time แก้ไขได้ทันที</p>
         </div>
-        <div class="sheet-tabs-bar" id="sheetTabs"></div>
-        <div class="sheet-table-wrap">
-          <table class="sheet-table" id="sheetTable">
-            <thead id="sheetHead"></thead>
-            <tbody id="sheetBody"></tbody>
-          </table>
-        </div>
-        <div class="sheet-status">
-          <span id="sheetRowCount">0 rows</span>
-          <span id="sheetLastUpdate">Last updated: --</span>
-        </div>
+        <a id="sheetLink" href="https://docs.google.com/spreadsheets/d/1vSvvecxGN_Vek716UTBTPvq2KAko6EswJgAUJpAuxi4" target="_blank" class="btn btn-sm btn-outline" style="text-decoration:none">Open in Google Sheets ↗</a>
+      </div>
+      <div style="border-radius:12px;overflow:hidden;border:1px solid #e5e5e7;box-shadow:0 2px 12px rgba(0,0,0,0.06)">
+        <iframe id="sheetIframe" src="https://docs.google.com/spreadsheets/d/1vSvvecxGN_Vek716UTBTPvq2KAko6EswJgAUJpAuxi4/edit?rm=minimal" width="100%" height="600" frameborder="0" style="display:block"></iframe>
       </div>
     </div>
 
@@ -1248,6 +1129,18 @@
        INIT
        ────────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
+      // Load setup wizard config if available
+      const setupConfig = localStorage.getItem('ai_studio_setup');
+      if (setupConfig) {
+        try {
+          const sc = JSON.parse(setupConfig);
+          if (sc.deepseekKey && DEMO_CONFIG.ai) DEMO_CONFIG.ai.api_key = sc.deepseekKey;
+          if (sc.industry) DEMO_CONFIG.industry = sc.industry;
+          if (sc.lineSecret) DEMO_CONFIG.line_channel_secret = sc.lineSecret;
+          if (sc.lineToken) DEMO_CONFIG.line_channel_access_token = sc.lineToken;
+        } catch(e) {}
+      }
+
       // Load saved environment and credentials from localStorage
       const savedEnv = localStorage.getItem('demo_environment');
       if (savedEnv) DEMO_CONFIG.environment = savedEnv;
@@ -1259,6 +1152,15 @@
 
       const savedWebhook = localStorage.getItem('n8n_webhook_url');
       if (savedWebhook) DEMO_CONFIG.n8n_webhook_url = savedWebhook;
+
+      // Update Google Sheet iframe with configured sheet ID
+      const sheetId = setupConfig ? JSON.parse(setupConfig).sheetId : null;
+      if (sheetId) {
+        const iframe = document.getElementById('sheetIframe');
+        const link = document.getElementById('sheetLink');
+        if (iframe) iframe.src = `https://docs.google.com/spreadsheets/d/${sheetId}/edit?rm=minimal`;
+        if (link) link.href = `https://docs.google.com/spreadsheets/d/${sheetId}`;
+      }
 
       // Initialize the dashboard
       initDashboard();
@@ -1581,6 +1483,7 @@
 
       // 1. Try n8n webhook
       const payload = {
+        industry: DEMO_CONFIG.industry,
         events: [{
           type: 'message',
           message: { type: 'text', text: message },
@@ -2235,131 +2138,9 @@
       ctx.quadraticCurveTo(x, y, x + r, y);
     }
 
-    /* ══════════════════════════════════════════════════
-       GOOGLE SHEET DATABASE SIMULATOR
-       ══════════════════════════════════════════════════ */
-    const SHEET_DATA = {
-      products: {
-        label: '📦 สินค้า Products',
-        columns: ['SKU', 'ชื่อสินค้า Name', 'ราคา Price', 'สต็อก Stock', 'หมวด Category', 'รายละเอียด Description'],
-        rows: [], // loaded from products.json
-        editable: true,
-      },
-      customers: {
-        label: 'ลูกค้า Customers',
-        columns: ['ID', 'ชื่อ Name', 'เบอร์โทร Phone', 'LINE ID', 'สถานะ Status', 'วันที่สมัคร Joined', 'ยอดรวม Total'],
-        rows: [
-          ['C001', 'สมชาย ใจดี', '081-234-5678', '@somchai_d', 'Active', '2026-01-15', '฿45,200'],
-          ['C002', 'สมหญิง รักสวย', '089-876-5432', '@somying_r', 'Active', '2026-01-22', '฿28,900'],
-          ['C003', 'วิชัย เก่งมาก', '062-111-2222', '@wichai_k', 'Active', '2026-02-03', '฿67,500'],
-          ['C004', 'นิภา สุขใจ', '095-333-4444', '@nipa_s', 'Inactive', '2026-02-10', '฿12,100'],
-          ['C005', 'ธนพล ดีเด่น', '086-555-6666', '@thanapol', 'Active', '2026-02-18', '฿89,300'],
-          ['C006', 'ปิยะ มั่นคง', '091-777-8888', '@piya_m', 'Active', '2026-03-01', '฿34,600'],
-          ['C007', 'กัญญา ใสสะอาด', '083-999-0000', '@kanya_s', 'VIP', '2026-03-05', '฿156,200'],
-          ['C008', 'อรุณ ศรีสมาน', '087-222-3333', '@arun_s', 'Active', '2026-03-10', '฿21,800'],
-        ],
-      },
-      orders: {
-        label: 'คำสั่งซื้อ Orders',
-        columns: ['Order ID', 'ลูกค้า Customer', 'รายการ Items', 'ยอดรวม Total', 'สถานะ Status', 'วันที่ Date', 'ช่องทาง Channel'],
-        rows: [
-          ['ORD-0301', 'สมชาย ใจดี', 'X200 Pro x1', '฿12,500', 'จัดส่งแล้ว', '2026-03-15', 'LINE'],
-          ['ORD-0302', 'วิชัย เก่งมาก', 'เคสกันกระแทก x3', '฿2,970', 'กำลังจัดเตรียม', '2026-03-15', 'LINE'],
-          ['ORD-0303', 'กัญญา ใสสะอาด', 'X200 Pro x2, สาย Type-C x2', '฿25,580', 'จัดส่งแล้ว', '2026-03-16', 'Website'],
-          ['ORD-0304', 'ธนพล ดีเด่น', 'หูฟัง BT700 x1', '฿3,490', 'รับออเดอร์', '2026-03-16', 'LINE'],
-          ['ORD-0305', 'ปิยะ มั่นคง', 'แท่นชาร์จ x1, สาย x2', '฿1,890', 'จัดส่งแล้ว', '2026-03-17', 'LINE'],
-        ],
-      },
-      messages: {
-        label: 'ข้อความ Messages',
-        columns: ['เวลา Time', 'ลูกค้า Customer', 'ข้อความ Message', 'AI Reply', 'สถานะ Status', 'Response Time'],
-        rows: [
-          ['09:15', 'สมชาย ใจดี', 'สินค้า X200 ราคาเท่าไหร่', 'สินค้า X200 ราคา 12,500 บาทครับ...', 'AI ตอบ', '1.2s'],
-          ['09:32', 'สมหญิง รักสวย', 'มีส่วนลดไหมคะ', 'ตอนนี้มีโปรลด 10% ครับ...', 'AI ตอบ', '1.5s'],
-          ['10:01', 'วิชัย เก่งมาก', 'สั่งเคส 3 ชิ้น', 'รับออเดอร์ ORD-0302 เคส 3 ชิ้น...', 'AI ตอบ', '2.1s'],
-          ['10:45', 'นิภา สุขใจ', 'ขอคุยกับพนักงาน', '—', 'ส่งต่อ Staff', '0.8s'],
-          ['11:20', 'ธนพล ดีเด่น', 'หูฟังรุ่นไหนดี', 'แนะนำ BT700 ครับ เสียงดี...', 'AI ตอบ', '1.8s'],
-          ['13:05', 'ปิยะ มั่นคง', 'เช็คสถานะคำสั่งซื้อ', 'ORD-0305 จัดส่งแล้วครับ...', 'AI ตอบ', '1.1s'],
-        ],
-      },
-      reviews: {
-        label: 'รีวิว Reviews',
-        columns: ['วันที่ Date', 'ลูกค้า Customer', 'คะแนน Rating', 'รีวิว Review', 'AI Reply', 'Platform'],
-        rows: [
-          ['2026-03-15', 'สมชาย ใจดี', '⭐⭐⭐⭐⭐', 'สินค้าดีมาก ส่งไว', 'ขอบคุณมากครับ! ดีใจที่ถูกใจ...', 'Google'],
-          ['2026-03-15', 'นิภา สุขใจ', '⭐⭐⭐', 'สินค้าโอเค แต่ส่งช้า', 'ขออภัยครับ จะปรับปรุงการจัดส่ง...', 'Google'],
-          ['2026-03-16', 'วิชัย เก่งมาก', '⭐⭐⭐⭐⭐', 'แพ็คสวย ของแท้ แนะนำ', 'ขอบคุณสำหรับรีวิว 5 ดาว!...', 'Facebook'],
-          ['2026-03-17', 'กัญญา ใสสะอาด', '⭐⭐⭐⭐', 'คุณภาพดี ราคาเหมาะสม', 'ขอบคุณครับ! เรามุ่งพัฒนาเสมอ...', 'Google'],
-        ],
-      },
-    };
-
-    let currentSheetTab = 'customers';
-
-    async function buildSheet() {
-      const title = document.getElementById('sheetTitle');
-      title.textContent = currentPreset.name_en + ' — AI Database';
-
-      // Load products from products.json
-      try {
-        const res = await fetch('/products.json');
-        const products = await res.json();
-        SHEET_DATA.products.rows = products.map(p => [
-          p.sku, p.name, '฿' + p.price.toLocaleString(), p.stock, p.category, p.description
-        ]);
-      } catch (e) { console.warn('Could not load products.json:', e); }
-
-      const tabBar = document.getElementById('sheetTabs');
-      tabBar.innerHTML = '';
-      Object.keys(SHEET_DATA).forEach((key, i) => {
-        const tab = document.createElement('div');
-        tab.className = 'sheet-tab' + (i === 0 ? ' active' : '');
-        tab.textContent = SHEET_DATA[key].label;
-        tab.onclick = () => switchSheetTab(key);
-        tabBar.appendChild(tab);
-      });
-
-      renderSheetData('products');
-    }
-
-    function switchSheetTab(tabKey) {
-      currentSheetTab = tabKey;
-      document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
-      const tabs = document.querySelectorAll('.sheet-tab');
-      const keys = Object.keys(SHEET_DATA);
-      const idx = keys.indexOf(tabKey);
-      if (tabs[idx]) tabs[idx].classList.add('active');
-      renderSheetData(tabKey);
-    }
-
-    function renderSheetData(tabKey) {
-      const data = SHEET_DATA[tabKey];
-      const head = document.getElementById('sheetHead');
-      const body = document.getElementById('sheetBody');
-
-      head.innerHTML = '<tr><th>#</th>' + data.columns.map(c => '<th>' + c + '</th>').join('') + '</tr>';
-      body.innerHTML = data.rows.map((row, i) =>
-        '<tr><td>' + (i + 1) + '</td>' + row.map(cell => '<td>' + cell + '</td>').join('') + '</tr>'
-      ).join('');
-
-      document.getElementById('sheetRowCount').textContent = data.rows.length + ' rows';
-      document.getElementById('sheetLastUpdate').textContent = 'Last updated: ' + new Date().toLocaleTimeString('th-TH');
-    }
-
-    // Add row to sheet when order/review/message happens
-    function addSheetRow(tabKey, row) {
-      if (!SHEET_DATA[tabKey]) return;
-      SHEET_DATA[tabKey].rows.unshift(row);
-      if (currentSheetTab === tabKey) {
-        renderSheetData(tabKey);
-        // Flash new row
-        const tbody = document.getElementById('sheetBody');
-        if (tbody.firstChild) {
-          tbody.firstChild.querySelectorAll('td').forEach(td => td.classList.add('cell-new'));
-        }
-      }
-      showToast('📋 ข้อมูลใหม่เพิ่มใน ' + SHEET_DATA[tabKey].label, 'info');
-    }
+    // No-op for legacy addSheetRow calls
+    function addSheetRow() {}
+    function buildSheet() {}
   </script>
 </body>
 </html>

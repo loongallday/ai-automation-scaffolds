@@ -1,0 +1,72 @@
+{
+  "name": "Google Sheet Writer — Orders & Messages",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sheet-write",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "name": "Webhook",
+      "position": [200, 300],
+      "webhookId": "sheet-write"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "w1", "name": "tab", "value": "={{ $json.body?.tab ?? $json.tab ?? 'Orders' }}", "type": "string"},
+            {"id": "w2", "name": "row", "value": "={{ JSON.stringify($json.body?.row ?? $json.row ?? []) }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Extract",
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1vSvvecxGN_Vek716UTBTPvq2KAko6EswJgAUJpAuxi4/values/' + encodeURIComponent($json.tab) + ':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ values: [JSON.parse($json.row)] }) }}",
+        "options": {"ignoreHttpStatusErrors": true}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "name": "Append Row",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'ok', tab: $('Extract').item.json.tab }) }}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "name": "Reply",
+      "position": [800, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {"main": [[{"node": "Extract", "type": "main", "index": 0}]]},
+    "Extract": {"main": [[{"node": "Append Row", "type": "main", "index": 0}]]},
+    "Append Row": {"main": [[{"node": "Reply", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "active": true
+}

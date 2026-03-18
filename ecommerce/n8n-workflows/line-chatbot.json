@@ -1,5 +1,5 @@
 {
-  "name": "LINE Ecommerce Chatbot",
+  "name": "LINE AI Chatbot",
   "nodes": [
     {
       "parameters": {
@@ -11,11 +11,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "name": "Webhook",
-      "position": [
-        200,
-        300
-      ],
-      "webhookId": "line-ecom"
+      "position": [200, 300],
+      "webhookId": "line-main"
     },
     {
       "parameters": {
@@ -32,6 +29,18 @@
               "name": "userId",
               "value": "={{ $json.body?.events?.[0]?.source?.userId ?? $json.events?.[0]?.source?.userId ?? 'unknown' }}",
               "type": "string"
+            },
+            {
+              "id": "m3",
+              "name": "industry",
+              "value": "={{ $json.body?.industry ?? $json.industry ?? 'ecommerce' }}",
+              "type": "string"
+            },
+            {
+              "id": "m4",
+              "name": "sheetId",
+              "value": "={{ $json.body?.sheetId ?? $json.sheetId ?? '' }}",
+              "type": "string"
             }
           ]
         },
@@ -40,70 +49,15 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "name": "Extract",
-      "position": [
-        400,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "method": "GET",
-        "url": "http://caddy:80/products.json",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "text"
-            }
-          }
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "name": "Get Products",
-      "position": [
-        600,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "c1",
-              "name": "userMessage",
-              "value": "={{ $('Extract').item.json.message }}",
-              "type": "string"
-            },
-            {
-              "id": "c2",
-              "name": "catalog",
-              "value": "={{ $json.data }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "name": "Merge",
-      "position": [
-        800,
-        300
-      ]
+      "position": [420, 300]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.deepseek.com/chat/completions",
+        "url": "http://host.docker.internal:3002/api/chat/webhook",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer YOUR_DEEPSEEK_API_KEY"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
@@ -112,90 +66,52 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'deepseek-chat', messages: [ { role: 'system', content: 'คุณเป็น AI ร้านค้าออนไลน์ ตอบภาษาไทย สุภาพ กระชับ\\n\\n=== สินค้าในร้าน (ใช้ราคาจากนี้เท่านั้น) ===\\n' + $json.catalog + '\\n===\\n\\nกฎ: 1.ราคาตามแคตตาล็อกเท่านั้น 2.แจ้งสต็อก 3.สั่งซื้อให้สรุปยอดรวม 4.เรื่องอื่นปฏิเสธสุภาพ' }, { role: 'user', content: $json.userMessage } ], max_tokens: 500, temperature: 0.7 }) }}",
-        "options": {}
+        "jsonBody": "={{ JSON.stringify({ message: $json.message, userId: $json.userId, industry: $json.industry, sheetId: $json.sheetId }) }}",
+        "options": {
+          "timeout": 30000
+        }
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "name": "DeepSeek",
-      "position": [
-        1020,
-        300
-      ]
+      "name": "Call Admin API",
+      "position": [640, 300],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ reply: $json.choices?.[0]?.message?.content ?? 'ขออภัยครับ ระบบขัดข้องชั่วคราว' }) }}"
+        "responseBody": "={{ JSON.stringify({ reply: $json.reply ?? 'ขออภัยครับ ระบบขัดข้องชั่วคราว' }) }}"
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "name": "Reply",
-      "position": [
-        1240,
-        300
-      ]
+      "name": "Reply OK",
+      "position": [860, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ reply: 'ขออภัยครับ ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง' }) }}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "name": "Reply Error",
+      "position": [860, 450]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Extract",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Extract", "type": "main", "index": 0 }]]
     },
     "Extract": {
-      "main": [
-        [
-          {
-            "node": "Get Products",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
+      "main": [[{ "node": "Call Admin API", "type": "main", "index": 0 }]]
     },
-    "Get Products": {
+    "Call Admin API": {
       "main": [
-        [
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge": {
-      "main": [
-        [
-          {
-            "node": "DeepSeek",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "DeepSeek": {
-      "main": [
-        [
-          {
-            "node": "Reply",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Reply OK", "type": "main", "index": 0 }],
+        [{ "node": "Reply Error", "type": "main", "index": 0 }]
       ]
     }
   },
-  "settings": {
-    "executionOrder": "v1"
-  },
+  "settings": { "executionOrder": "v1" },
   "active": true
 }

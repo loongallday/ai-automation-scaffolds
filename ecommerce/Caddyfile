@@ -1,32 +1,54 @@
 # Local development Caddyfile
 :80 {
-    # DeepSeek AI proxy — solves CORS, hides API key from browser
-    handle /ai/* {
-        header {
-            Access-Control-Allow-Origin *
-            Access-Control-Allow-Methods "GET, POST, OPTIONS"
-            Access-Control-Allow-Headers "Content-Type, Authorization"
-        }
-        @options method OPTIONS
-        respond @options 204
+    # Global CORS for all routes
+    header {
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization, X-N8N-API-KEY"
+    }
+    @options method OPTIONS
+    respond @options 204
 
+    # DeepSeek AI proxy — hides API key from browser
+    handle /ai/* {
         uri strip_prefix /ai
         reverse_proxy https://api.deepseek.com {
             header_up Host api.deepseek.com
             header_up Authorization "Bearer {$DEEPSEEK_API_KEY}"
+            header_down -Access-Control-Allow-Origin
         }
     }
 
-    # n8n webhook proxy with CORS
-    handle /webhook/* {
-        header {
-            Access-Control-Allow-Origin *
-            Access-Control-Allow-Methods "GET, POST, OPTIONS"
-            Access-Control-Allow-Headers "Content-Type, Authorization"
+    # n8n health check proxy
+    handle /healthz {
+        reverse_proxy n8n:5678 {
+            header_down -Access-Control-Allow-Origin
         }
-        @options method OPTIONS
-        respond @options 204
-        reverse_proxy n8n:5678
+    }
+
+    # n8n webhook proxy
+    handle /webhook/* {
+        reverse_proxy n8n:5678 {
+            header_down -Access-Control-Allow-Origin
+        }
+    }
+
+    # n8n UI/API proxy
+    handle_path /n8n/* {
+        reverse_proxy n8n:5678 {
+            header_down -Access-Control-Allow-Origin
+        }
+    }
+
+    # Flowise proxy
+    handle_path /flowise/* {
+        reverse_proxy flowise:3000
+    }
+
+    # Admin portal proxy
+    handle /admin/* {
+        uri strip_prefix /admin
+        reverse_proxy admin:3002
     }
 
     # Demo Dashboard
@@ -36,16 +58,6 @@
     }
     handle /demo {
         redir /demo/ permanent
-    }
-
-    # n8n UI proxy
-    handle_path /n8n/* {
-        reverse_proxy n8n:5678
-    }
-
-    # Flowise proxy
-    handle_path /flowise/* {
-        reverse_proxy flowise:3000
     }
 
     # Default — serve dashboard

@@ -1,0 +1,11 @@
+[
+  {"id": "CD-001", "name": "Life Asoke Rama 9", "type": "คอนโด", "price": 3200000, "area": "32 ตร.ม.", "bedrooms": 1, "floor": "12", "location": "พระราม 9", "status": "ว่าง", "description": "คอนโดใกล้ MRT พระราม 9 วิวเมือง สระว่ายน้ำ ฟิตเนส 24 ชม."},
+  {"id": "CD-002", "name": "The Line Asoke-Ratchada", "type": "คอนโด", "price": 4500000, "area": "35 ตร.ม.", "bedrooms": 1, "floor": "18", "location": "อโศก", "status": "ว่าง", "description": "คอนโดหรู ติด MRT เพชรบุรี ห้องแต่งครบ วิวสวย"},
+  {"id": "CD-003", "name": "Rhythm Asoke", "type": "คอนโด", "price": 5100000, "area": "45 ตร.ม.", "bedrooms": 1, "floor": "25", "location": "อโศก", "status": "ว่าง", "description": "คอนโดระดับพรีเมียม ใกล้ BTS อโศก ห้องกว้าง วิวเมือง 180 องศา"},
+  {"id": "CD-004", "name": "Ideo Q Sukhumvit 36", "type": "คอนโด", "price": 6800000, "area": "50 ตร.ม.", "bedrooms": 2, "floor": "20", "location": "สุขุมวิท 36", "status": "ว่าง", "description": "คอนโด 2 ห้องนอน ใกล้ BTS ทองหล่อ ครัวปิด วิวโล่ง"},
+  {"id": "CD-005", "name": "Whizdom 101", "type": "คอนโด", "price": 3800000, "area": "28 ตร.ม.", "bedrooms": "Studio", "floor": "15", "location": "ปุณณวิถี", "status": "ว่าง", "description": "สตูดิโอ ใกล้ BTS ปุณณวิถี True Digital Park เหมาะกับคนทำงาน"},
+  {"id": "HS-001", "name": "บ้านเดี่ยว เศรษฐสิริ พระราม 2", "type": "บ้านเดี่ยว", "price": 12500000, "area": "180 ตร.ม.", "bedrooms": 4, "floor": "2 ชั้น", "location": "พระราม 2", "status": "ว่าง", "description": "บ้านเดี่ยว 4 นอน 3 น้ำ จอดรถ 2 คัน สวนสวย หมู่บ้านปิดมี รปภ."},
+  {"id": "HS-002", "name": "ทาวน์โฮม The Connect", "type": "ทาวน์โฮม", "price": 2900000, "area": "95 ตร.ม.", "bedrooms": 3, "floor": "2 ชั้น", "location": "รังสิต", "status": "ว่าง", "description": "ทาวน์โฮม 3 นอน 2 น้ำ ใกล้รถไฟฟ้าสายสีแดง จอดรถ 1 คัน"},
+  {"id": "HS-003", "name": "บ้านเดี่ยว Centro", "type": "บ้านเดี่ยว", "price": 8500000, "area": "150 ตร.ม.", "bedrooms": 3, "floor": "2 ชั้น", "location": "บางนา", "status": "จอง", "description": "บ้านเดี่ยว 3 นอน สไตล์โมเดิร์น ใกล้เมกาบางนา"},
+  {"id": "LD-001", "name": "ที่ดินเปล่า นครปฐม", "type": "ที่ดิน", "price": 5000000, "area": "200 ตร.วา", "bedrooms": "-", "floor": "-", "location": "นครปฐม", "status": "ว่าง", "description": "ที่ดินเปล่า ติดถนน ใกล้มหาวิทยาลัย เหมาะสร้างบ้าน/หอพัก"}
+]

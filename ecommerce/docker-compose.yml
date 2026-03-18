@@ -18,12 +18,13 @@ services:
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       - GENERIC_TIMEZONE=Asia/Bangkok
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID}
       - N8N_AI_ENABLED=true
       - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
-      - NODE_FUNCTION_ALLOW_EXTERNAL=fetch
       - N8N_RESTRICT_ENVIRONMENT_VARIABLES_ACCESS=false
     volumes:
       - n8n_data:/home/node/.n8n
+      - /Users/loongallday/Downloads/pde-sales-connect-1d0156258d88.json:/config/google-credentials.json:ro
     depends_on:
       - postgres
 
@@ -33,8 +34,6 @@ services:
     ports:
       - "7778:3000"
     environment:
-      - FLOWISE_USERNAME=${FLOWISE_USERNAME}
-      - FLOWISE_PASSWORD=${FLOWISE_PASSWORD}
       - FLOWISE_SECRETKEY_OVERWRITE=flowise-demo-secret-key-2024
       - FLOWISE_FILE_SIZE_LIMIT=50mb
       - DISABLE_FLOWISE_TELEMETRY=true
@@ -48,6 +47,14 @@ services:
       - flowise_data:/root/.flowise
     depends_on:
       - postgres
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: always
+    ports:
+      - "7782:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
 
   postgres:
     image: postgres:15-alpine
@@ -75,9 +82,22 @@ services:
       - caddy_config:/config
       - ../demo-dashboard:/srv/demo-dashboard:ro
 
+  admin:
+    build:
+      context: ../admin
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3002:3002"
+    environment:
+      - GOOGLE_SERVICE_ACCOUNT_JSON=/config/google-credentials.json
+    volumes:
+      - /Users/loongallday/Downloads/pde-sales-connect-1d0156258d88.json:/config/google-credentials.json:ro
+
 volumes:
   n8n_data:
   flowise_data:
   postgres_data:
+  qdrant_data:
   caddy_data:
   caddy_config:

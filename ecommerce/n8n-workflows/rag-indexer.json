@@ -1,0 +1,98 @@
+{
+  "name": "RAG Indexer — Google Sheet → Qdrant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rag-index",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "name": "Webhook",
+      "position": [200, 300],
+      "webhookId": "rag-index"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "s1", "name": "sheetTab", "value": "={{ $json.body?.sheet ?? $json.sheet ?? 'Products-Ecommerce' }}", "type": "string"},
+            {"id": "s2", "name": "collection", "value": "={{ ($json.body?.sheet ?? $json.sheet ?? 'products-ecommerce').toLowerCase().replace(/[^a-z0-9]/g, '-') }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Config",
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://docs.google.com/spreadsheets/d/1vSvvecxGN_Vek716UTBTPvq2KAko6EswJgAUJpAuxi4/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent($json.sheetTab) }}",
+        "options": {"response": {"response": {"responseFormat": "text"}}}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "name": "Fetch CSV",
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'http://qdrant:6333/collections/' + $('Config').item.json.collection }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"vectors\":{\"size\":384,\"distance\":\"Cosine\"}}",
+        "options": {"ignoreHttpStatusErrors": true}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "name": "Create Collection",
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Authorization", "value": "Bearer sk-0573c299f0dd4b72bb6719be3504fa0b"},
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'deepseek-chat', messages: [ { role: 'system', content: 'แปลง CSV data ต่อไปนี้เป็น JSON array โดยแต่ละ row เป็น 1 object ที่มี field \"text\" (รวมทุก column เป็น text อ่านง่าย) และ field \"metadata\" (object ที่มีทุก column แยกเป็น key-value) ตอบเป็น JSON เท่านั้น ไม่ต้องมี markdown' }, { role: 'user', content: $('Fetch CSV').item.json.data } ], max_tokens: 4000, temperature: 0 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "name": "Parse to JSON",
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'indexed', collection: $('Config').item.json.collection, message: $json.choices?.[0]?.message?.content?.substring(0,100) ?? 'done' }) }}"
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "name": "Reply",
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {"main": [[{"node": "Config", "type": "main", "index": 0}]]},
+    "Config": {"main": [[{"node": "Fetch CSV", "type": "main", "index": 0}]]},
+    "Fetch CSV": {"main": [[{"node": "Create Collection", "type": "main", "index": 0}]]},
+    "Create Collection": {"main": [[{"node": "Parse to JSON", "type": "main", "index": 0}]]},
+    "Parse to JSON": {"main": [[{"node": "Reply", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "active": true
+}

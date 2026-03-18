@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Studio — Setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Bai Jamjuree', -apple-system, sans-serif; background: #f5f5f7; color: #1d1d1f; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .setup { background: #fff; border-radius: 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.08); max-width: 700px; width: 100%; overflow: hidden; }
+    .setup-header { background: linear-gradient(135deg, #1d1d1f 0%, #2d2d30 100%); padding: 36px 40px 28px; color: #fff; text-align: center; }
+    .setup-header .logo { font-size: 2rem; font-weight: 700; margin-bottom: 6px; }
+    .setup-header .logo span { color: #3b82f6; }
+    .setup-header p { color: rgba(255,255,255,0.6); font-size: 0.85rem; }
+    .steps { display: flex; justify-content: center; gap: 0; padding: 20px 40px 0; }
+    .step-dot { width: 28px; height: 28px; border-radius: 50%; background: #e5e5e7; color: #86868b; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; transition: all 0.3s; }
+    .step-dot.active { background: #06c; color: #fff; }
+    .step-dot.done { background: #30d158; color: #fff; }
+    .step-line { width: 40px; height: 2px; background: #e5e5e7; align-self: center; transition: background 0.3s; }
+    .step-line.done { background: #30d158; }
+    .step-content { padding: 28px 40px; display: none; animation: fadeIn 0.3s ease; }
+    .step-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .step-content h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 4px; }
+    .step-content .subtitle { color: #86868b; font-size: 0.8rem; margin-bottom: 20px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.75rem; font-weight: 600; color: #6e6e73; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field input, .field select { width: 100%; padding: 10px 14px; border: 1.5px solid #d2d2d7; border-radius: 10px; font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s; outline: none; }
+    .field input:focus, .field select:focus { border-color: #06c; }
+    .field input.error { border-color: #ff453a; }
+    .field input.success { border-color: #30d158; }
+    .field .hint { font-size: 0.7rem; color: #86868b; margin-top: 3px; }
+    .field .hint a { color: #06c; }
+    .test-result { padding: 10px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 500; margin-top: 10px; display: none; }
+    .test-result.success { display: block; background: #d1fae5; color: #065f46; }
+    .test-result.error { display: block; background: #fee2e2; color: #991b1b; }
+    .test-result.loading { display: block; background: #f0f0f2; color: #6e6e73; }
+    .btn-row { display: flex; justify-content: space-between; padding: 0 40px 28px; gap: 12px; }
+    .btn { padding: 10px 24px; border-radius: 10px; border: none; font-family: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: #06c; color: #fff; }
+    .btn-primary:hover { background: #0055b3; }
+    .btn-primary:disabled { background: #d2d2d7; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1.5px solid #d2d2d7; color: #1d1d1f; }
+    .btn-outline:hover { background: #f5f5f7; }
+    .btn-success { background: #30d158; color: #fff; }
+    .btn-test { background: #f0f0f2; color: #1d1d1f; font-size: 0.8rem; padding: 8px 16px; }
+    .btn-test:hover { background: #e5e5e7; }
+    hr.sep { border: none; border-top: 1px solid #f0f0f2; margin: 20px 0; }
+
+    .industry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .industry-card { padding: 14px; border: 1.5px solid #e5e5e7; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .industry-card:hover { border-color: #06c; background: #f0f7ff; }
+    .industry-card.selected { border-color: #06c; background: #e8f4fd; }
+    .industry-card .ic-emoji { font-size: 1.3rem; margin-bottom: 2px; }
+    .industry-card .ic-name { font-size: 0.8rem; font-weight: 600; }
+    .industry-card .ic-desc { font-size: 0.65rem; color: #86868b; }
+
+    .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .option-card { padding: 12px 14px; border: 1.5px solid #e5e5e7; border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+    .option-card:hover { border-color: #06c; background: #f0f7ff; }
+    .option-card.selected { border-color: #06c; background: #e8f4fd; }
+    .option-card.disabled { opacity: 0.4; cursor: not-allowed; }
+    .option-card .oc-icon { font-size: 1.2rem; width: 28px; text-align: center; }
+    .option-card .oc-text { flex: 1; }
+    .option-card .oc-name { font-size: 0.8rem; font-weight: 600; }
+    .option-card .oc-desc { font-size: 0.65rem; color: #86868b; }
+    .option-card .oc-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 6px; font-weight: 600; }
+    .oc-badge.free { background: #d1fae5; color: #065f46; }
+    .oc-badge.paid { background: #fef3c7; color: #92400e; }
+    .oc-badge.local { background: #dbeafe; color: #1e40af; }
+
+    .channel-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .channel-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1.5px solid #e5e5e7; border-radius: 10px; transition: all 0.2s; }
+    .channel-item.active { border-color: #06c; background: #f8fbff; }
+    .channel-item .ch-toggle { width: 40px; height: 22px; border-radius: 11px; background: #d2d2d7; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+    .channel-item .ch-toggle.on { background: #30d158; }
+    .channel-item .ch-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .channel-item .ch-toggle.on::after { transform: translateX(18px); }
+    .channel-item .ch-icon { font-size: 1.2rem; width: 28px; text-align: center; }
+    .channel-item .ch-info { flex: 1; }
+    .channel-item .ch-name { font-size: 0.8rem; font-weight: 600; }
+    .channel-item .ch-desc { font-size: 0.65rem; color: #86868b; }
+    .channel-item .ch-fields { margin-top: 8px; display: none; }
+    .channel-item.active .ch-fields { display: block; }
+    .channel-item .ch-fields input { width: 100%; padding: 7px 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 0.8rem; font-family: inherit; margin-top: 4px; outline: none; }
+    .channel-item .ch-fields input:focus { border-color: #06c; }
+    .channel-item .ch-fields .hint { font-size: 0.65rem; color: #86868b; margin-top: 2px; }
+
+    .env-output { background: #1d1d1f; color: #e5e5e7; border-radius: 10px; padding: 16px; font-family: 'SF Mono', 'Menlo', monospace; font-size: 0.75rem; line-height: 1.6; white-space: pre-wrap; word-break: break-all; max-height: 280px; overflow-y: auto; margin-bottom: 12px; position: relative; }
+    .env-output .key { color: #7dd3fc; }
+    .env-output .val { color: #86efac; }
+    .env-output .comment { color: #6e6e73; }
+    .copy-btn { position: absolute; top: 8px; right: 8px; padding: 3px 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; font-size: 0.65rem; cursor: pointer; }
+    .cmd-box { background: #1d1d1f; color: #86efac; padding: 12px 16px; border-radius: 10px; font-family: 'SF Mono', 'Menlo', monospace; font-size: 0.8rem; margin: 10px 0; position: relative; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .summary-item { background: #f9f9fb; padding: 12px 14px; border-radius: 10px; }
+    .summary-item .si-label { font-size: 0.65rem; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-item .si-value { font-size: 0.85rem; font-weight: 600; margin-top: 3px; }
+    .si-value.ok { color: #30d158; }
+    .si-value.warn { color: #f59e0b; }
+  </style>
+</head>
+<body>
+<div class="setup">
+  <div class="setup-header">
+    <div class="logo"><span>AI</span> Studio</div>
+    <p>Setup Wizard — Configure your AI demo</p>
+  </div>
+
+  <div class="steps" id="stepsBar">
+    <div class="step-dot active" id="sd1">1</div><div class="step-line" id="sl1"></div>
+    <div class="step-dot" id="sd2">2</div><div class="step-line" id="sl2"></div>
+    <div class="step-dot" id="sd3">3</div><div class="step-line" id="sl3"></div>
+    <div class="step-dot" id="sd4">4</div><div class="step-line" id="sl4"></div>
+    <div class="step-dot" id="sd5">5</div>
+  </div>
+
+  <!-- ═══ Step 1: Industry ═══ -->
+  <div class="step-content active" id="step1">
+    <h2>เลือกประเภทธุรกิจ</h2>
+    <p class="subtitle">Choose which industry demo to configure</p>
+    <div class="industry-grid">
+      <div class="industry-card selected" data-industry="ecommerce" onclick="selectIndustry(this)"><div class="ic-emoji">🛒</div><div class="ic-name">E-Commerce</div><div class="ic-desc">ร้านค้าออนไลน์</div></div>
+      <div class="industry-card" data-industry="restaurant" onclick="selectIndustry(this)"><div class="ic-emoji">🍜</div><div class="ic-name">Restaurant</div><div class="ic-desc">ร้านอาหาร</div></div>
+      <div class="industry-card" data-industry="realestate" onclick="selectIndustry(this)"><div class="ic-emoji">🏠</div><div class="ic-name">Real Estate</div><div class="ic-desc">อสังหาริมทรัพย์</div></div>
+      <div class="industry-card" data-industry="legal" onclick="selectIndustry(this)"><div class="ic-emoji">⚖️</div><div class="ic-name">Legal</div><div class="ic-desc">สำนักงานกฎหมาย</div></div>
+      <div class="industry-card" data-industry="healthcare" onclick="selectIndustry(this)"><div class="ic-emoji">🏥</div><div class="ic-name">Healthcare</div><div class="ic-desc">คลินิก/โรงพยาบาล</div></div>
+      <div class="industry-card" data-industry="creator" onclick="selectIndustry(this)"><div class="ic-emoji">🎬</div><div class="ic-name">Creator</div><div class="ic-desc">Content Creator</div></div>
+      <div class="industry-card" data-industry="home-ai" onclick="selectIndustry(this)"><div class="ic-emoji">🏡</div><div class="ic-name">Smart Home</div><div class="ic-desc">บ้านอัจฉริยะ</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ Step 2: AI Model ═══ -->
+  <div class="step-content" id="step2">
+    <h2>เลือก AI Model</h2>
+    <p class="subtitle">Choose your LLM provider — all OpenAI-compatible APIs work</p>
+
+    <div class="option-grid">
+      <div class="option-card selected" data-model="deepseek" onclick="selectModel(this)">
+        <div class="oc-icon">🧠</div>
+        <div class="oc-text"><div class="oc-name">DeepSeek</div><div class="oc-desc">deepseek-chat — ถูกที่สุด</div></div>
+        <span class="oc-badge paid">$0.14/M</span>
+      </div>
+      <div class="option-card" data-model="openai" onclick="selectModel(this)">
+        <div class="oc-icon">🤖</div>
+        <div class="oc-text"><div class="oc-name">OpenAI</div><div class="oc-desc">gpt-4o-mini / gpt-4o</div></div>
+        <span class="oc-badge paid">$0.15/M</span>
+      </div>
+      <div class="option-card" data-model="claude" onclick="selectModel(this)">
+        <div class="oc-icon">🟠</div>
+        <div class="oc-text"><div class="oc-name">Claude</div><div class="oc-desc">claude-sonnet-4-6</div></div>
+        <span class="oc-badge paid">$3/M</span>
+      </div>
+      <div class="option-card" data-model="gemini" onclick="selectModel(this)">
+        <div class="oc-icon">💎</div>
+        <div class="oc-text"><div class="oc-name">Gemini</div><div class="oc-desc">gemini-2.0-flash</div></div>
+        <span class="oc-badge free">Free tier</span>
+      </div>
+      <div class="option-card" data-model="ollama" onclick="selectModel(this)">
+        <div class="oc-icon">🦙</div>
+        <div class="oc-text"><div class="oc-name">Ollama (Local)</div><div class="oc-desc">llama3, qwen2, mistral</div></div>
+        <span class="oc-badge local">Free</span>
+      </div>
+      <div class="option-card" data-model="lmstudio" onclick="selectModel(this)">
+        <div class="oc-icon">🖥️</div>
+        <div class="oc-text"><div class="oc-name">LM Studio (Local)</div><div class="oc-desc">Any GGUF model</div></div>
+        <span class="oc-badge local">Free</span>
+      </div>
+    </div>
+
+    <div id="modelFields">
+      <div class="field">
+        <label id="modelKeyLabel">API Key</label>
+        <input type="password" id="modelKey" placeholder="sk-..." />
+        <div class="hint" id="modelKeyHint">Get one at the provider's website</div>
+      </div>
+      <div class="field" id="modelEndpointField">
+        <label>API Endpoint</label>
+        <input type="text" id="modelEndpoint" placeholder="https://api.deepseek.com/chat/completions" />
+        <div class="hint">OpenAI-compatible chat/completions endpoint</div>
+      </div>
+      <div class="field">
+        <label>Model Name</label>
+        <input type="text" id="modelName" placeholder="deepseek-chat" />
+      </div>
+    </div>
+
+    <button class="btn btn-test" onclick="testModel()" id="testModelBtn">🧪 Test Connection</button>
+    <div class="test-result" id="modelTestResult"></div>
+  </div>
+
+  <!-- ═══ Step 3: Channels ═══ -->
+  <div class="step-content" id="step3">
+    <h2>เลือกช่องทางสื่อสาร</h2>
+    <p class="subtitle">Enable the channels you want to connect — toggle on and fill credentials</p>
+
+    <div class="channel-list" id="channelList">
+      <div class="channel-item active" data-channel="web">
+        <div class="ch-toggle on" onclick="toggleChannel(this)"></div>
+        <div class="ch-icon">🌐</div>
+        <div class="ch-info">
+          <div class="ch-name">Web Chat (Dashboard)</div>
+          <div class="ch-desc">Built-in chat simulator — always enabled</div>
+        </div>
+      </div>
+      <div class="channel-item" data-channel="line">
+        <div class="ch-toggle" onclick="toggleChannel(this)"></div>
+        <div class="ch-icon">💚</div>
+        <div class="ch-info">
+          <div class="ch-name">LINE Official Account</div>
+          <div class="ch-desc">Connect to real LINE users</div>
+          <div class="ch-fields">
+            <input type="text" id="ch-line-secret" placeholder="Channel Secret" />
+            <input type="text" id="ch-line-token" placeholder="Channel Access Token" style="margin-top:6px" />
+            <div class="hint">Create at <a href="https://developers.line.biz" target="_blank">developers.line.biz</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="channel-item" data-channel="discord">
+        <div class="ch-toggle" onclick="toggleChannel(this)"></div>
+        <div class="ch-icon">🎮</div>
+        <div class="ch-info">
+          <div class="ch-name">Discord Bot</div>
+          <div class="ch-desc">AI bot in your Discord server</div>
+          <div class="ch-fields">
+            <input type="text" id="ch-discord-token" placeholder="Bot Token" />
+            <div class="hint">Create at <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="channel-item" data-channel="slack">
+        <div class="ch-toggle" onclick="toggleChannel(this)"></div>
+        <div class="ch-icon">💬</div>
+        <div class="ch-info">
+          <div class="ch-name">Slack Bot</div>
+          <div class="ch-desc">AI assistant in Slack workspace</div>
+          <div class="ch-fields">
+            <input type="text" id="ch-slack-token" placeholder="Bot OAuth Token (xoxb-...)" />
+            <input type="text" id="ch-slack-signing" placeholder="Signing Secret" style="margin-top:6px" />
+            <div class="hint">Create at <a href="https://api.slack.com/apps" target="_blank">api.slack.com</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="channel-item" data-channel="telegram">
+        <div class="ch-toggle" onclick="toggleChannel(this)"></div>
+        <div class="ch-icon">✈️</div>
+        <div class="ch-info">
+          <div class="ch-name">Telegram Bot</div>
+          <div class="ch-desc">AI chatbot on Telegram</div>
+          <div class="ch-fields">
+            <input type="text" id="ch-telegram-token" placeholder="Bot Token from @BotFather" />
+            <div class="hint">Create via <a href="https://t.me/BotFather" target="_blank">@BotFather</a> on Telegram</div>
+          </div>
+        </div>
+      </div>
+      <div class="channel-item" data-channel="whatsapp">
+        <div class="ch-toggle" onclick="toggleChannel(this)"></div>
+        <div class="ch-icon">📱</div>
+        <div class="ch-info">
+          <div class="ch-name">WhatsApp Business</div>
+          <div class="ch-desc">Connect via Meta Business API</div>
+          <div class="ch-fields">
+            <input type="text" id="ch-whatsapp-token" placeholder="Access Token" />
+            <input type="text" id="ch-whatsapp-phone" placeholder="Phone Number ID" style="margin-top:6px" />
+            <div class="hint">Setup at <a href="https://business.facebook.com" target="_blank">Meta Business Suite</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="channel-item" data-channel="email">
+        <div class="ch-toggle" onclick="toggleChannel(this)"></div>
+        <div class="ch-icon">📧</div>
+        <div class="ch-info">
+          <div class="ch-name">Email (IMAP/SMTP)</div>
+          <div class="ch-desc">Auto-reply to customer emails</div>
+          <div class="ch-fields">
+            <input type="text" id="ch-email-imap" placeholder="IMAP Server (imap.gmail.com)" />
+            <input type="text" id="ch-email-user" placeholder="Email address" style="margin-top:6px" />
+            <input type="password" id="ch-email-pass" placeholder="App Password" style="margin-top:6px" />
+            <div class="hint">Use App Password for Gmail — <a href="https://myaccount.google.com/apppasswords" target="_blank">generate here</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Step 4: Data Source ═══ -->
+  <div class="step-content" id="step4">
+    <h2>ตั้งค่า Data Source</h2>
+    <p class="subtitle">Where does the AI get product/service data from?</p>
+
+    <div class="field">
+      <label>Google Sheet ID</label>
+      <input type="text" id="sheetId" placeholder="1vSvvecxGN_Vek..." value="1vSvvecxGN_Vek716UTBTPvq2KAko6EswJgAUJpAuxi4" />
+      <div class="hint">AI reads data live from this sheet. <a href="https://docs.google.com/spreadsheets/d/1vSvvecxGN_Vek716UTBTPvq2KAko6EswJgAUJpAuxi4" target="_blank">Open default</a></div>
+    </div>
+    <div class="field">
+      <label>Google Service Account JSON (optional — for write access)</label>
+      <input type="text" id="googleCredPath" placeholder="/path/to/service-account.json" />
+    </div>
+  </div>
+
+  <!-- ═══ Step 5: Done ═══ -->
+  <div class="step-content" id="step5">
+    <h2>Setup Complete! 🎉</h2>
+    <p class="subtitle">Your configuration</p>
+
+    <div class="summary-grid">
+      <div class="summary-item"><div class="si-label">Industry</div><div class="si-value" id="sumIndustry">E-Commerce</div></div>
+      <div class="summary-item"><div class="si-label">AI Model</div><div class="si-value" id="sumModel">DeepSeek</div></div>
+      <div class="summary-item"><div class="si-label">Channels</div><div class="si-value" id="sumChannels">Web</div></div>
+    </div>
+
+    <div class="env-output" id="envOutput"><button class="copy-btn" onclick="copyEnv()">Copy</button></div>
+    <div class="cmd-box" id="cmdBox"><button class="copy-btn" onclick="copyCmd()">Copy</button></div>
+
+    <div style="background:#f0f7ff;padding:14px 18px;border-radius:10px;margin-top:12px">
+      <div style="font-size:0.8rem;font-weight:600;color:#06c;margin-bottom:6px">📋 Access URLs</div>
+      <div style="font-size:0.75rem;line-height:1.9;color:#374151">
+        <strong>Dashboard:</strong> <a href="http://localhost:7780" style="color:#06c">localhost:7780</a><br>
+        <strong>n8n:</strong> <a href="http://localhost:7777" style="color:#06c">localhost:7777</a> (admin@aistudiothailand.com / Demo1234!)<br>
+        <strong>Flowise:</strong> <a href="http://localhost:7778" style="color:#06c">localhost:7778</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-outline" id="prevBtn" onclick="prevStep()" style="visibility:hidden">← Back</button>
+    <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next →</button>
+  </div>
+</div>
+
+<script>
+  const TOTAL_STEPS = 5;
+  let currentStep = 1;
+
+  let config = {
+    industry: 'ecommerce',
+    model: 'deepseek',
+    modelKey: '',
+    modelEndpoint: 'https://api.deepseek.com/chat/completions',
+    modelName: 'deepseek-chat',
+    channels: { web: true, line: false, discord: false, slack: false, telegram: false, whatsapp: false, email: false },
+    channelCreds: {},
+    sheetId: '1vSvvecxGN_Vek716UTBTPvq2KAko6EswJgAUJpAuxi4',
+    googleCredPath: '',
+  };
+
+  const MODELS = {
+    deepseek: { name: 'DeepSeek', endpoint: 'https://api.deepseek.com/chat/completions', model: 'deepseek-chat', keyLabel: 'DeepSeek API Key', keyHint: 'Get at <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a>', needsKey: true },
+    openai: { name: 'OpenAI', endpoint: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini', keyLabel: 'OpenAI API Key', keyHint: 'Get at <a href="https://platform.openai.com" target="_blank">platform.openai.com</a>', needsKey: true },
+    claude: { name: 'Claude', endpoint: 'https://api.anthropic.com/v1/messages', model: 'claude-sonnet-4-6', keyLabel: 'Anthropic API Key', keyHint: 'Get at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>', needsKey: true },
+    gemini: { name: 'Gemini', endpoint: 'https://generativelanguage.googleapis.com/v1beta/chat/completions', model: 'gemini-2.0-flash', keyLabel: 'Google AI API Key', keyHint: 'Get at <a href="https://aistudio.google.com" target="_blank">AI Studio</a> — has free tier', needsKey: true },
+    ollama: { name: 'Ollama', endpoint: 'http://host.docker.internal:11434/v1/chat/completions', model: 'llama3.2', keyLabel: 'Not required', keyHint: 'Install Ollama: <a href="https://ollama.com" target="_blank">ollama.com</a> then run: ollama pull llama3.2', needsKey: false },
+    lmstudio: { name: 'LM Studio', endpoint: 'http://host.docker.internal:1234/v1/chat/completions', model: 'local-model', keyLabel: 'Not required', keyHint: 'Start LM Studio server on port 1234', needsKey: false },
+  };
+
+  const INDUSTRY_NAMES = { ecommerce: 'E-Commerce', restaurant: 'Restaurant', realestate: 'Real Estate', legal: 'Legal', healthcare: 'Healthcare', creator: 'Creator', 'home-ai': 'Smart Home' };
+
+  function selectIndustry(el) {
+    document.querySelectorAll('.industry-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    config.industry = el.dataset.industry;
+  }
+
+  function selectModel(el) {
+    document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    const m = el.dataset.model;
+    config.model = m;
+    const info = MODELS[m];
+    document.getElementById('modelKeyLabel').textContent = info.keyLabel;
+    document.getElementById('modelKeyHint').innerHTML = info.keyHint;
+    document.getElementById('modelEndpoint').value = info.endpoint;
+    document.getElementById('modelName').value = info.model;
+    document.getElementById('modelKey').style.display = info.needsKey ? '' : 'none';
+    document.getElementById('modelKeyLabel').style.display = info.needsKey ? '' : 'none';
+    document.getElementById('modelTestResult').style.display = 'none';
+  }
+
+  function toggleChannel(toggle) {
+    const item = toggle.closest('.channel-item');
+    const ch = item.dataset.channel;
+    if (ch === 'web') return; // always on
+    const isOn = toggle.classList.toggle('on');
+    item.classList.toggle('active', isOn);
+    config.channels[ch] = isOn;
+  }
+
+  function goToStep(step) {
+    currentStep = step;
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      document.getElementById('step' + i).classList.toggle('active', i === step);
+      const dot = document.getElementById('sd' + i);
+      dot.classList.remove('active', 'done');
+      if (i < step) dot.classList.add('done');
+      if (i === step) dot.classList.add('active');
+      if (i < TOTAL_STEPS) document.getElementById('sl' + i).classList.toggle('done', i < step);
+    }
+    document.getElementById('prevBtn').style.visibility = step === 1 ? 'hidden' : 'visible';
+    const nextBtn = document.getElementById('nextBtn');
+    if (step === TOTAL_STEPS) { nextBtn.textContent = '🚀 Open Dashboard'; nextBtn.className = 'btn btn-success'; }
+    else if (step === TOTAL_STEPS - 1) { nextBtn.textContent = 'Finish Setup →'; nextBtn.className = 'btn btn-primary'; }
+    else { nextBtn.textContent = 'Next →'; nextBtn.className = 'btn btn-primary'; }
+    if (step === TOTAL_STEPS) generateFinal();
+  }
+
+  function nextStep() {
+    if (currentStep === 2) {
+      config.modelKey = document.getElementById('modelKey').value.trim();
+      config.modelEndpoint = document.getElementById('modelEndpoint').value.trim();
+      config.modelName = document.getElementById('modelName').value.trim();
+      if (MODELS[config.model].needsKey && !config.modelKey) {
+        document.getElementById('modelKey').classList.add('error');
+        return;
+      }
+    }
+    if (currentStep === 3) {
+      // Collect channel credentials
+      config.channelCreds = {};
+      if (config.channels.line) {
+        config.channelCreds.line = { secret: document.getElementById('ch-line-secret')?.value, token: document.getElementById('ch-line-token')?.value };
+      }
+      if (config.channels.discord) config.channelCreds.discord = { token: document.getElementById('ch-discord-token')?.value };
+      if (config.channels.slack) config.channelCreds.slack = { token: document.getElementById('ch-slack-token')?.value, signing: document.getElementById('ch-slack-signing')?.value };
+      if (config.channels.telegram) config.channelCreds.telegram = { token: document.getElementById('ch-telegram-token')?.value };
+      if (config.channels.whatsapp) config.channelCreds.whatsapp = { token: document.getElementById('ch-whatsapp-token')?.value, phone: document.getElementById('ch-whatsapp-phone')?.value };
+      if (config.channels.email) config.channelCreds.email = { imap: document.getElementById('ch-email-imap')?.value, user: document.getElementById('ch-email-user')?.value, pass: document.getElementById('ch-email-pass')?.value };
+    }
+    if (currentStep === 4) {
+      config.sheetId = document.getElementById('sheetId').value.trim() || config.sheetId;
+      config.googleCredPath = document.getElementById('googleCredPath').value.trim();
+    }
+    if (currentStep === TOTAL_STEPS) {
+      localStorage.setItem('ai_studio_setup', JSON.stringify(config));
+      window.location.href = '/';
+      return;
+    }
+    if (currentStep < TOTAL_STEPS) goToStep(currentStep + 1);
+  }
+
+  function prevStep() { if (currentStep > 1) goToStep(currentStep - 1); }
+
+  async function testModel() {
+    const key = document.getElementById('modelKey').value.trim();
+    const endpoint = document.getElementById('modelEndpoint').value.trim();
+    const model = document.getElementById('modelName').value.trim();
+    const result = document.getElementById('modelTestResult');
+    const btn = document.getElementById('testModelBtn');
+    const info = MODELS[config.model];
+
+    if (info.needsKey && !key) { result.className = 'test-result error'; result.textContent = '⚠️ กรุณาใส่ API Key'; return; }
+
+    result.className = 'test-result loading';
+    result.textContent = '⏳ Testing...';
+    btn.disabled = true;
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (key) headers['Authorization'] = 'Bearer ' + key;
+
+      const res = await fetch(endpoint, {
+        method: 'POST', headers,
+        body: JSON.stringify({ model, messages: [{ role: 'user', content: 'say ok' }], max_tokens: 5 }),
+      });
+      const data = await res.json();
+      if (data.choices) {
+        result.className = 'test-result success';
+        result.textContent = '✅ Connected! ' + model + ' → ' + (data.choices[0].message?.content || 'ok');
+        document.getElementById('modelKey').classList.remove('error');
+        document.getElementById('modelKey').classList.add('success');
+      } else {
+        result.className = 'test-result error';
+        result.textContent = '❌ ' + (data.error?.message || JSON.stringify(data).substring(0, 100));
+      }
+    } catch (e) {
+      result.className = 'test-result error';
+      result.textContent = '❌ ' + e.message + (e.message.includes('Failed to fetch') ? ' (CORS — will work via Caddy proxy after Docker setup)' : '');
+    }
+    btn.disabled = false;
+  }
+
+  function generateFinal() {
+    const ind = config.industry;
+    const channels = Object.entries(config.channels).filter(([,v]) => v).map(([k]) => k);
+
+    document.getElementById('sumIndustry').textContent = INDUSTRY_NAMES[ind];
+    document.getElementById('sumModel').textContent = MODELS[config.model].name;
+    document.getElementById('sumModel').className = 'si-value ok';
+    document.getElementById('sumChannels').textContent = channels.join(', ');
+
+    let env = `# AI Studio — ${INDUSTRY_NAMES[ind]} Demo
+# Generated by Setup Wizard
+
+# === AI Model (${MODELS[config.model].name}) ===
+AI_PROVIDER=${config.model}
+AI_API_KEY=${config.modelKey || 'not-required'}
+AI_ENDPOINT=${config.modelEndpoint}
+AI_MODEL=${config.modelName}
+DEEPSEEK_API_KEY=${config.model === 'deepseek' ? config.modelKey : ''}
+
+# === Google Sheets ===
+GOOGLE_SHEET_ID=${config.sheetId}${config.googleCredPath ? '\nGOOGLE_SERVICE_ACCOUNT_JSON=' + config.googleCredPath : ''}
+
+# === n8n ===
+N8N_HOST=localhost
+WEBHOOK_URL=http://localhost:7777/
+N8N_ENCRYPTION_KEY=demo-${ind}-key-2024
+
+# === PostgreSQL ===
+POSTGRES_DB=automation
+POSTGRES_USER=automation
+POSTGRES_PASSWORD=demo-pass-2024
+
+# === Domain ===
+DOMAIN=localhost`;
+
+    if (config.channels.line) {
+      env += `\n\n# === LINE ===\nLINE_CHANNEL_SECRET=${config.channelCreds.line?.secret || 'demo'}\nLINE_CHANNEL_ACCESS_TOKEN=${config.channelCreds.line?.token || 'demo'}`;
+    }
+    if (config.channels.discord) env += `\n\n# === Discord ===\nDISCORD_BOT_TOKEN=${config.channelCreds.discord?.token || ''}`;
+    if (config.channels.slack) env += `\n\n# === Slack ===\nSLACK_BOT_TOKEN=${config.channelCreds.slack?.token || ''}\nSLACK_SIGNING_SECRET=${config.channelCreds.slack?.signing || ''}`;
+    if (config.channels.telegram) env += `\n\n# === Telegram ===\nTELEGRAM_BOT_TOKEN=${config.channelCreds.telegram?.token || ''}`;
+    if (config.channels.whatsapp) env += `\n\n# === WhatsApp ===\nWHATSAPP_ACCESS_TOKEN=${config.channelCreds.whatsapp?.token || ''}\nWHATSAPP_PHONE_NUMBER_ID=${config.channelCreds.whatsapp?.phone || ''}`;
+    if (config.channels.email) env += `\n\n# === Email ===\nEMAIL_IMAP_SERVER=${config.channelCreds.email?.imap || ''}\nEMAIL_USER=${config.channelCreds.email?.user || ''}\nEMAIL_PASSWORD=${config.channelCreds.email?.pass || ''}`;
+
+    const output = document.getElementById('envOutput');
+    output.innerHTML = '<button class="copy-btn" onclick="copyEnv()">Copy</button>' +
+      env.split('\n').map(l => {
+        if (l.startsWith('#')) return '<span class="comment">' + l + '</span>';
+        if (l.includes('=')) { const [k,...v] = l.split('='); return '<span class="key">' + k + '</span>=<span class="val">' + v.join('=') + '</span>'; }
+        return l;
+      }).join('\n');
+    output.dataset.raw = env;
+
+    const cmd = `cd ai-automation-scaffolds/${ind}\n# Save .env, then:\ndocker compose up -d && cd .. && ./setup-credentials.sh ${ind}`;
+    document.getElementById('cmdBox').innerHTML = '<button class="copy-btn" onclick="copyCmd()">Copy</button>' + cmd;
+    document.getElementById('cmdBox').dataset.raw = cmd;
+  }
+
+  function copyEnv() { navigator.clipboard.writeText(document.getElementById('envOutput').dataset.raw).then(() => { document.querySelector('#envOutput .copy-btn').textContent = 'Copied!'; setTimeout(() => document.querySelector('#envOutput .copy-btn').textContent = 'Copy', 2000); }); }
+  function copyCmd() { navigator.clipboard.writeText(document.getElementById('cmdBox').dataset.raw).then(() => { document.querySelector('#cmdBox .copy-btn').textContent = 'Copied!'; setTimeout(() => document.querySelector('#cmdBox .copy-btn').textContent = 'Copy', 2000); }); }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('ai_studio_setup');
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.industry) { config.industry = s.industry; document.querySelectorAll('.industry-card').forEach(c => c.classList.toggle('selected', c.dataset.industry === s.industry)); }
+        if (s.model) { config.model = s.model; document.querySelectorAll('.option-card').forEach(c => c.classList.toggle('selected', c.dataset.model === s.model)); selectModel(document.querySelector(`[data-model="${s.model}"]`)); }
+        if (s.modelKey) document.getElementById('modelKey').value = s.modelKey;
+        if (s.modelEndpoint) document.getElementById('modelEndpoint').value = s.modelEndpoint;
+        if (s.modelName) document.getElementById('modelName').value = s.modelName;
+        if (s.sheetId) document.getElementById('sheetId').value = s.sheetId;
+        if (s.channels) {
+          Object.entries(s.channels).forEach(([ch, on]) => {
+            if (on && ch !== 'web') {
+              const item = document.querySelector(`[data-channel="${ch}"]`);
+              if (item) { item.classList.add('active'); item.querySelector('.ch-toggle').classList.add('on'); config.channels[ch] = true; }
+            }
+          });
+        }
+        if (s.channelCreds) {
+          config.channelCreds = s.channelCreds;
+          if (s.channelCreds.line) { const el1 = document.getElementById('ch-line-secret'); const el2 = document.getElementById('ch-line-token'); if (el1) el1.value = s.channelCreds.line.secret || ''; if (el2) el2.value = s.channelCreds.line.token || ''; }
+          if (s.channelCreds.discord) { const el = document.getElementById('ch-discord-token'); if (el) el.value = s.channelCreds.discord.token || ''; }
+          if (s.channelCreds.telegram) { const el = document.getElementById('ch-telegram-token'); if (el) el.value = s.channelCreds.telegram.token || ''; }
+        }
+      } catch(e) {}
+    }
+  });
+</script>
+</body>
+</html>
